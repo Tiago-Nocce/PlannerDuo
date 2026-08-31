@@ -1,15 +1,30 @@
 // ==========================================
-// ESTADO GLOBAL DA APLICAÇÃO (PLANNER DUO)
+// CONFIGURAÇÃO DO FIREBASE (Substitua pelas suas chaves)
+// ==========================================
+const firebaseConfig = {
+    apiKey: "SUA_API_KEY_AQUI",
+    authDomain: "seu-projeto.firebaseapp.com",
+    projectId: "seu-projeto",
+    storageBucket: "seu-projeto.appspot.com",
+    messagingSenderId: "SEU_SENDER_ID",
+    appId: "SEU_APP_ID"
+};
+
+if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+const db = firebase.firestore();
+
+// ==========================================
+// ESTADO GLOBAL DA APLICAÇÃO
 // ==========================================
 const Estado = {
-    usuario: null,
-    viagens: JSON.parse(localStorage.getItem('planner_viagens')) || [],
-    financas: JSON.parse(localStorage.getItem('planner_financas')) || [],
-    metas: JSON.parse(localStorage.getItem('planner_metas')) || []
+    usuario: null, // O e-mail do casal será a chave do documento no Firestore
+    viagens: [],
+    financas: [],
+    metas: []
 };
 
 // ==========================================
-// UTILITÁRIOS
+// UTILITÁRIOS & SINCRONIZAÇÃO EM NUVEM
 // ==========================================
 const Utils = {
     gerarId: () => crypto.randomUUID ? crypto.randomUUID() : '_' + Math.random().toString(36).substr(2, 9),
@@ -19,10 +34,32 @@ const Utils = {
         const [ano, mes, dia] = dataString.split('-');
         return `${dia}/${mes}/${ano}`;
     },
-    gerarSlug: (texto) => {
-        return texto.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+    gerarSlug: (texto) => texto.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'),
+
+    salvarNaNuvem: async (colecao) => {
+        if (!Estado.usuario) return;
+        try {
+            await db.collection('casais').doc(Estado.usuario).set({
+                [colecao]: Estado[colecao]
+            }, { merge: true });
+        } catch (error) {
+            console.error("Erro ao salvar no Firebase:", error);
+            UI.mostrarToast("Erro de conexão", "erro");
+        }
     },
-    salvar: (chave, dados) => localStorage.setItem(chave, JSON.stringify(dados))
+
+    ouvirNuvem: () => {
+        if (!Estado.usuario) return;
+        db.collection('casais').doc(Estado.usuario).onSnapshot((doc) => {
+            if (doc.exists) {
+                const dados = doc.data();
+                Estado.viagens = dados.viagens || [];
+                Estado.financas = dados.financas || [];
+                Estado.metas = dados.metas || [];
+                Render.tudo();
+            }
+        });
+    }
 };
 
 // ==========================================
@@ -50,13 +87,10 @@ const UI = {
                 e.preventDefault();
                 document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('ativo'));
                 document.querySelectorAll('.view').forEach(view => view.classList.remove('ativa'));
-
                 item.classList.add('ativo');
                 const alvoId = item.getAttribute('data-alvo');
                 document.getElementById(alvoId).classList.add('ativa');
                 document.querySelector('.sidebar').classList.remove('aberto');
-
-                if (alvoId === 'dashboard') Render.dashboard();
             });
         });
         document.getElementById('btn-menu-mobile')?.addEventListener('click', () => {
@@ -78,12 +112,12 @@ const Auth = {
             Estado.usuario = user;
             telaAuth.classList.remove('ativa');
             telaApp.classList.add('ativa');
-
             const nomeStr = localStorage.getItem('planner_name') || user.split('@')[0];
             const primeiroNome = nomeStr.split(' ')[0];
             document.getElementById('saudacao-usuario').innerText = `Olá, ${primeiroNome.charAt(0).toUpperCase() + primeiroNome.slice(1)}`;
 
-            Render.tudo();
+            // Inicia Sincronização em Tempo Real (Firebase)
+            Utils.ouvirNuvem();
         } else {
             telaAuth.classList.add('ativa');
             telaApp.classList.remove('ativa');
@@ -99,7 +133,7 @@ const Auth = {
         e.preventDefault();
         localStorage.setItem('planner_name', document.getElementById('cadastro-nome').value);
         localStorage.setItem('planner_user', document.getElementById('cadastro-email').value);
-        UI.mostrarToast('Conta do Casal criada com sucesso!');
+        UI.mostrarToast('Conta criada com sucesso!');
         Auth.verificarSessao();
     },
     logout: () => {
@@ -117,7 +151,7 @@ const Auth = {
 };
 
 // ==========================================
-// BUSCAS PARAMÉTRICAS (HUB DE VIAGENS)
+// MOTOR DE BUSCAS PARAMÉTRICAS
 // ==========================================
 const ServicoBusca = {
     redirecionar: (plataforma) => {
@@ -154,24 +188,57 @@ const ServicoBusca = {
 };
 
 // ==========================================
-// CONTROLADORES DE CRUD
+// CONTROLADORES DE CRUD (AGORA SALVA NO FIREBASE)
 // ==========================================
 const Controladores = {
-    salvar: (tipo, formId, buildObj) => {
-        const estadoKey = tipo === 'viagem' ? 'viagens' : tipo === 'financa' ? 'financas' : 'metas';
-        Estado[estadoKey].push(buildObj());
-        Utils.salvar(`planner_${estadoKey}`, Estado[estadoKey]);
-        UI.fecharModal(`modal-${tipo}`);
-        UI.mostrarToast('Salvo com sucesso!');
-        Render.tudo();
+    adicionarViagem: (e) => {
+        e.preventDefault();
+        Estado.viagens.push({
+            id: Utils.gerarId(),
+            destino: document.getElementById('viagem-destino').value,
+            ida: document.getElementById('viagem-ida').value,
+            volta: document.getElementById('viagem-volta').value,
+            link: document.getElementById('viagem-link').value,
+            orcamento: parseFloat(document.getElementById('viagem-orcamento').value)
+        });
+        Utils.salvarNaNuvem('viagens');
+        UI.fecharModal('modal-viagem');
+        UI.mostrarToast('Roteiro salvo na nuvem!');
     },
+
+    adicionarFinanca: (e) => {
+        e.preventDefault();
+        Estado.financas.push({
+            id: Utils.gerarId(),
+            desc: document.getElementById('financa-desc').value,
+            tipo: document.getElementById('financa-tipo').value,
+            valor: parseFloat(document.getElementById('financa-valor').value),
+            resp: document.getElementById('financa-resp').value,
+            data: document.getElementById('financa-data').value
+        });
+        Utils.salvarNaNuvem('financas');
+        UI.fecharModal('modal-financa');
+        UI.mostrarToast('Transação salva na nuvem!');
+    },
+
+    adicionarMeta: (e) => {
+        e.preventDefault();
+        Estado.metas.push({
+            id: Utils.gerarId(),
+            titulo: document.getElementById('meta-titulo').value,
+            prazo: document.getElementById('meta-prazo').value
+        });
+        Utils.salvarNaNuvem('metas');
+        UI.fecharModal('modal-meta');
+        UI.mostrarToast('Meta salva na nuvem!');
+    },
+
     deletar: (tipo, id) => {
-        if (!confirm('Deseja excluir?')) return;
-        const estadoKey = tipo === 'viagem' ? 'viagens' : tipo === 'financa' ? 'financas' : 'metas';
-        Estado[estadoKey] = Estado[estadoKey].filter(item => item.id !== id);
-        Utils.salvar(`planner_${estadoKey}`, Estado[estadoKey]);
-        UI.mostrarToast('Removido com sucesso.');
-        Render.tudo();
+        if (!confirm('Desejam excluir este item?')) return;
+        if (tipo === 'viagem') { Estado.viagens = Estado.viagens.filter(v => v.id !== id); Utils.salvarNaNuvem('viagens'); }
+        if (tipo === 'financa') { Estado.financas = Estado.financas.filter(f => f.id !== id); Utils.salvarNaNuvem('financas'); }
+        if (tipo === 'meta') { Estado.metas = Estado.metas.filter(m => m.id !== id); Utils.salvarNaNuvem('metas'); }
+        UI.mostrarToast('Item excluído.');
     }
 };
 
@@ -180,75 +247,113 @@ const Controladores = {
 // ==========================================
 const Render = {
     tudo: () => { Render.dashboard(); Render.viagens(); Render.financas(); Render.metas(); },
+
     dashboard: () => {
         const futuras = Estado.viagens.filter(v => new Date(v.ida) >= new Date(new Date().setHours(0, 0, 0, 0))).sort((a, b) => new Date(a.ida) - new Date(b.ida));
-        document.getElementById('stat-next-trip').innerText = futuras.length ? `${futuras[0].destino} (${Utils.formatarData(futuras[0].ida)})` : 'Nenhum';
+        document.getElementById('stat-next-trip').innerText = futuras.length ? `${futuras[0].destino}` : 'Nenhum agendado';
 
         const mesAtual = new Date().getMonth(), anoAtual = new Date().getFullYear();
         const despesasMes = Estado.financas.filter(f => f.tipo === 'despesa' && new Date(f.data + 'T00:00:00').getMonth() === mesAtual && new Date(f.data + 'T00:00:00').getFullYear() === anoAtual).reduce((s, f) => s + f.valor, 0);
         document.getElementById('stat-expenses').innerText = Utils.formatarMoeda(despesasMes);
+
         document.getElementById('stat-goals').innerText = Estado.metas.filter(m => new Date(m.prazo + 'T00:00:00') >= new Date(new Date().setHours(0, 0, 0, 0))).length;
+
+        // Calculadora de Acerto (Dashboard)
+        const totalEu = Estado.financas.filter(f => f.tipo === 'despesa' && f.resp === 'Eu').reduce((s, f) => s + f.valor, 0);
+        const totalEle = Estado.financas.filter(f => f.tipo === 'despesa' && f.resp === 'Ele(a)').reduce((s, f) => s + f.valor, 0);
+        const diferenca = Math.abs(totalEu - totalEle) / 2;
+        const elAcertoDash = document.getElementById('stat-acerto');
+        if (totalEu > totalEle) elAcertoDash.innerHTML = `Ele(a) deve: <br> ${Utils.formatarMoeda(diferenca)}`;
+        else if (totalEle > totalEu) elAcertoDash.innerHTML = `Você deve: <br> ${Utils.formatarMoeda(diferenca)}`;
+        else elAcertoDash.innerText = 'Tudo quite!';
     },
+
     viagens: () => {
         const lista = document.getElementById('lista-viagens');
-        lista.innerHTML = Estado.viagens.length ? '' : '<p class="text-muted">Nenhum roteiro salvo.</p>';
+        lista.innerHTML = Estado.viagens.length ? '' : '<p class="text-muted">Nenhum roteiro salvo. Utilizem a busca acima para planejar!</p>';
+
         Estado.viagens.sort((a, b) => new Date(a.ida) - new Date(b.ida)).forEach(v => {
-            lista.innerHTML += `<div class="card-flat">
-                <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
-                    <h3 style="color: var(--text-title); font-size: 1.1rem;">${v.destino}</h3>
-                    <button class="btn-icon" onclick="Controladores.deletar('viagem', '${v.id}')"><i class="fa-solid fa-trash text-danger"></i></button>
-                </div>
-                <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 8px;"><i class="fa-regular fa-calendar"></i> ${Utils.formatarData(v.ida)} a ${Utils.formatarData(v.volta)}</p>
-                ${v.link ? `<a href="${v.link}" target="_blank" style="color: var(--primary-orange); font-size: 0.85rem; font-weight: 600; text-decoration: none;"><i class="fa-solid fa-link"></i> Ver Reserva</a>` : ''}
-                <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-light);">
-                    <span class="badge receita">Orçamento: ${Utils.formatarMoeda(v.orcamento)}</span>
-                </div>
-            </div>`;
+            lista.innerHTML += `
+                <div class="card-flat">
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+                        <h3 style="font-size: 1.15rem; color: var(--text-title); font-weight: 800;">${v.destino}</h3>
+                        <button class="btn-icon text-danger" onclick="Controladores.deletar('viagem', '${v.id}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 8px;"><i class="fa-regular fa-calendar"></i> ${Utils.formatarData(v.ida)} a ${Utils.formatarData(v.volta)}</p>
+                    ${v.link ? `<a href="${v.link}" target="_blank" style="color: var(--primary-orange); text-decoration: none; font-size: 0.85rem; font-weight: 700;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Acessar Reserva</a>` : ''}
+                    <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-light);">
+                        <span class="badge receita">Orçamento: ${Utils.formatarMoeda(v.orcamento)}</span>
+                    </div>
+                </div>`;
         });
     },
+
     financas: () => {
+        const lista = document.getElementById('lista-financas');
         const totais = Estado.financas.reduce((acc, f) => { acc[f.tipo === 'receita' ? 'receitas' : 'despesas'] += f.valor; return acc; }, { receitas: 0, despesas: 0 });
+
         document.getElementById('total-receitas').innerText = Utils.formatarMoeda(totais.receitas);
         document.getElementById('total-despesas').innerText = Utils.formatarMoeda(totais.despesas);
-        document.getElementById('total-saldo').innerText = Utils.formatarMoeda(totais.receitas - totais.despesas);
+        const saldo = totais.receitas - totais.despesas;
+        document.getElementById('total-saldo').innerText = Utils.formatarMoeda(saldo);
+        document.getElementById('total-saldo').className = saldo >= 0 ? 'text-success' : 'text-danger';
 
-        const lista = document.getElementById('lista-financas');
-        lista.innerHTML = Estado.financas.length ? '' : '<tr><td colspan="5" class="text-muted" style="text-align: center;">Nenhuma movimentação cadastrada.</td></tr>';
+        // Lógica de Acerto de Contas na aba Finanças
+        const totalEu = Estado.financas.filter(f => f.tipo === 'despesa' && f.resp === 'Eu').reduce((s, f) => s + f.valor, 0);
+        const totalEle = Estado.financas.filter(f => f.tipo === 'despesa' && f.resp === 'Ele(a)').reduce((s, f) => s + f.valor, 0);
+        const diferenca = Math.abs(totalEu - totalEle) / 2;
+        const elAcerto = document.getElementById('status-acerto');
+
+        if (totalEu > totalEle) {
+            elAcerto.innerHTML = `Ele(a) deve pagar<br><span style="color: #10b981; font-weight: 800;">+ ${Utils.formatarMoeda(diferenca)}</span>`;
+        } else if (totalEle > totalEu) {
+            elAcerto.innerHTML = `Você deve pagar<br><span style="color: #ef4444; font-weight: 800;">- ${Utils.formatarMoeda(diferenca)}</span>`;
+        } else {
+            elAcerto.innerHTML = `Tudo quite!<br><i class="fa-solid fa-handshake"></i>`;
+        }
+
+        lista.innerHTML = Estado.financas.length ? '' : '<tr><td colspan="5" style="text-align: center;" class="text-muted">Nenhuma movimentação cadastrada.</td></tr>';
+
         [...Estado.financas].sort((a, b) => new Date(b.data) - new Date(a.data)).forEach(f => {
-            lista.innerHTML += `<tr>
-                <td>${Utils.formatarData(f.data)}</td>
-                <td style="font-weight: 500;">${f.desc}</td>
-                <td>${f.resp}</td>
-                <td><span class="badge ${f.tipo}">${f.tipo === 'receita' ? '+' : '-'} ${Utils.formatarMoeda(f.valor)}</span></td>
-                <td><button class="btn-icon text-danger" onclick="Controladores.deletar('financa', '${f.id}')"><i class="fa-solid fa-trash"></i></button></td>
-            </tr>`;
+            lista.innerHTML += `
+                <tr>
+                    <td>${Utils.formatarData(f.data)}</td>
+                    <td style="font-weight: 600; color: var(--text-dark);">${f.desc}</td>
+                    <td>${f.resp}</td>
+                    <td><span class="badge ${f.tipo}">${f.tipo === 'receita' ? '+' : '-'} ${Utils.formatarMoeda(f.valor)}</span></td>
+                    <td><button class="btn-icon text-danger" onclick="Controladores.deletar('financa', '${f.id}')"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>`;
         });
     },
+
     metas: () => {
         const lista = document.getElementById('lista-metas');
-        lista.innerHTML = Estado.metas.length ? '' : '<p class="text-muted">Nenhuma meta ativa.</p>';
+        lista.innerHTML = Estado.metas.length ? '' : '<p class="text-muted">Nenhuma meta ativa no momento.</p>';
+
         Estado.metas.sort((a, b) => new Date(a.prazo) - new Date(b.prazo)).forEach(m => {
             const atrasado = new Date(m.prazo + 'T00:00:00') < new Date(new Date().setHours(0, 0, 0, 0));
-            lista.innerHTML += `<div class="card-flat">
-                <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
-                    <h3 style="color: var(--text-title); font-size: 1.1rem;">${m.titulo}</h3>
-                    <button class="btn-icon" onclick="Controladores.deletar('meta', '${m.id}')"><i class="fa-solid fa-trash text-danger"></i></button>
-                </div>
-                <p style="color: ${atrasado ? 'var(--danger)' : 'var(--success)'}; font-weight: 600; font-size: 0.9rem;"><i class="fa-regular fa-clock"></i> Prazo: ${Utils.formatarData(m.prazo)} ${atrasado ? '(Atrasado)' : ''}</p>
-            </div>`;
+            const cor = atrasado ? 'var(--danger)' : 'var(--success)';
+            lista.innerHTML += `
+                <div class="card-flat">
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+                        <h3 style="font-size: 1.15rem; color: var(--text-dark); font-weight: 800;">${m.titulo}</h3>
+                        <button class="btn-icon text-danger" onclick="Controladores.deletar('meta', '${m.id}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <p style="color: ${cor}; font-weight: 700; font-size: 0.9rem;"><i class="fa-regular fa-clock"></i> Prazo: ${Utils.formatarData(m.prazo)} ${atrasado ? '(Atrasado)' : ''}</p>
+                </div>`;
         });
     }
 };
 
 // ==========================================
-// START
+// INICIALIZAÇÃO EVENT LISTENERS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('form-login').addEventListener('submit', Auth.login);
     document.getElementById('form-cadastro').addEventListener('submit', Auth.cadastro);
-    document.getElementById('form-viagem').addEventListener('submit', (e) => Controladores.salvar('viagem', 'form-viagem', () => ({ id: Utils.gerarId(), destino: document.getElementById('viagem-destino').value, ida: document.getElementById('viagem-ida').value, volta: document.getElementById('viagem-volta').value, link: document.getElementById('viagem-link').value, orcamento: parseFloat(document.getElementById('viagem-orcamento').value) })));
-    document.getElementById('form-financa').addEventListener('submit', (e) => Controladores.salvar('financa', 'form-financa', () => ({ id: Utils.gerarId(), desc: document.getElementById('financa-desc').value, tipo: document.getElementById('financa-tipo').value, valor: parseFloat(document.getElementById('financa-valor').value), resp: document.getElementById('financa-resp').value, data: document.getElementById('financa-data').value })));
-    document.getElementById('form-meta').addEventListener('submit', (e) => Controladores.salvar('meta', 'form-meta', () => ({ id: Utils.gerarId(), titulo: document.getElementById('meta-titulo').value, prazo: document.getElementById('meta-prazo').value })));
+    document.getElementById('form-viagem').addEventListener('submit', Controladores.adicionarViagem);
+    document.getElementById('form-financa').addEventListener('submit', Controladores.adicionarFinanca);
+    document.getElementById('form-meta').addEventListener('submit', Controladores.adicionarMeta);
 
     UI.setupNav();
     Auth.verificarSessao();

@@ -21,23 +21,23 @@
                     <i class="fa-solid fa-heart logo-icon"></i>
                     <h1>PlannerDuo</h1>
                 </div>
-                <h2>Planejamento a dois</h2>
-                <p>Organize o orçamento conjunto, trace metas financeiras e compare viagens de forma simples e direta.
-                </p>
+                <h2>Planejamento a dois em tempo real</h2>
+                <p>Organize o orçamento conjunto, divida despesas automaticamente e planeje viagens com sincronização em
+                    nuvem.</p>
                 <ul class="auth-features">
-                    <li><i class="fa-solid fa-coins"></i> Finanças Compartilhadas</li>
+                    <li><i class="fa-solid fa-cloud"></i> Sincronização Firebase</li>
+                    <li><i class="fa-solid fa-calculator"></i> Acerto de Contas Automático</li>
                     <li><i class="fa-solid fa-plane-departure"></i> Hub de Viagens</li>
-                    <li><i class="fa-solid fa-bullseye"></i> Metas do Casal</li>
                 </ul>
             </div>
 
             <div class="auth-forms">
                 <div id="secao-login" class="secao-form ativa">
                     <h2>Bem-vindo de volta!</h2>
-                    <p>Entre na conta de vocês</p>
+                    <p>Entre na conta do casal</p>
                     <form id="form-login">
                         <div class="form-group">
-                            <label>E-mail</label>
+                            <label>E-mail do Casal</label>
                             <div class="input-wrapper">
                                 <i class="fa-regular fa-envelope"></i>
                                 <input type="email" id="login-email" placeholder="casal@exemplo.com" required>
@@ -68,7 +68,7 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>E-mail</label>
+                            <label>E-mail do Casal</label>
                             <div class="input-wrapper">
                                 <i class="fa-regular fa-envelope"></i>
                                 <input type="email" id="cadastro-email" required>
@@ -145,10 +145,10 @@
                         </div>
                     </div>
                     <div class="stat-card card-flat">
-                        <div class="stat-icon"><i class="fa-solid fa-flag-checkered"></i></div>
+                        <div class="stat-icon"><i class="fa-solid fa-handshake"></i></div>
                         <div class="stat-info">
-                            <h3>Metas Ativas</h3>
-                            <p id="stat-goals">0</p>
+                            <h3>Acerto de Contas</h3>
+                            <p id="stat-acerto" class="text-success">Tudo quite!</p>
                         </div>
                     </div>
                 </div>
@@ -256,9 +256,15 @@
                         <span class="summary-label">Total de Saídas</span>
                         <h3 id="total-despesas" class="text-danger">R$ 0,00</h3>
                     </div>
-                    <div class="summary-item right">
+                    <div class="summary-item center">
                         <span class="summary-label">Saldo em Caixa</span>
                         <h3 id="total-saldo" class="text-success">R$ 0,00</h3>
+                    </div>
+                    <!-- Nova Divisão: Acerto de Contas -->
+                    <div class="summary-item right"
+                        style="border-left: 1px solid var(--border-light); padding-left: 20px;">
+                        <span class="summary-label">Acerto (Quem deve?)</span>
+                        <h3 id="status-acerto" style="color: #f59e0b; font-size: 1.6rem;">Tudo quite!</h3>
                     </div>
                 </div>
 
@@ -269,7 +275,7 @@
                                 <tr>
                                     <th>Data</th>
                                     <th>Descrição</th>
-                                    <th>Responsável</th>
+                                    <th>Quem Pagou</th>
                                     <th>Valor</th>
                                     <th>Ações</th>
                                 </tr>
@@ -365,7 +371,7 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Responsável</label>
+                        <label>Quem Pagou?</label>
                         <div class="input-wrapper">
                             <select id="financa-resp" required>
                                 <option value="Eu">Eu</option>
@@ -413,6 +419,11 @@
         </div>
     </div>
 
+    <!-- FIREBASE SDKS -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <!-- LÓGICA DA APLICAÇÃO -->
     <script src="app.js"></script>
 </body>
 
