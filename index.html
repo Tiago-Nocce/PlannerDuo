@@ -4,323 +4,410 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlannerDuo - Finanças e Viagens</title>
-    <link rel="stylesheet" href="style.css">
+    <title>PlannerDuo - Gestão a Dois</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <!-- Animações de fundo baseadas no AgendaCar -->
-    <div class="background-visuals">
-        <div class="tech-grid"></div>
-        <div class="side-glow side-glow-left"></div>
-        <div class="side-glow side-glow-right"></div>
-    </div>
+    <div id="toast-container"></div>
 
-    <div id="container-notificacao"></div>
-
-    <!-- Tela de Autenticação -->
+    <!-- TELA DE AUTENTICAÇÃO -->
     <div id="tela-autenticacao" class="tela ativa">
-        <div class="wrapper-autenticacao painel-vidro">
-            <div class="info-autenticacao">
-                <h1><i class="fa-solid fa-heart"></i> PlannerDuo</h1>
-                <h2>Gestão a dois simplificada</h2>
-                <p>Planeje suas finanças, defina metas conjuntas, organize viagens, aluguéis de Airbnb e passagens em um
-                    só lugar.</p>
-                <ul class="recursos-autenticacao">
+        <div class="auth-wrapper card-flat">
+            <div class="auth-info">
+                <div class="logo-header">
+                    <i class="fa-solid fa-heart logo-icon"></i>
+                    <h1>PlannerDuo</h1>
+                </div>
+                <h2>Planejamento a dois</h2>
+                <p>Organize o orçamento conjunto, trace metas financeiras e compare viagens de forma simples e direta.
+                </p>
+                <ul class="auth-features">
                     <li><i class="fa-solid fa-coins"></i> Finanças Compartilhadas</li>
-                    <li><i class="fa-solid fa-map-location-dot"></i> Central de Viagens e Airbnb</li>
+                    <li><i class="fa-solid fa-plane-departure"></i> Hub de Viagens</li>
                     <li><i class="fa-solid fa-bullseye"></i> Metas do Casal</li>
                 </ul>
             </div>
 
-            <div class="formularios-autenticacao">
+            <div class="auth-forms">
                 <div id="secao-login" class="secao-form ativa">
                     <h2>Bem-vindo de volta!</h2>
-                    <p>Faça login para continuar</p>
+                    <p>Entre na conta de vocês</p>
                     <form id="form-login">
-                        <div class="grupo-input">
-                            <i class="fa-regular fa-envelope"></i>
-                            <input type="email" id="login-email" placeholder="E-mail" required>
+                        <div class="form-group">
+                            <label>E-mail</label>
+                            <div class="input-wrapper">
+                                <i class="fa-regular fa-envelope"></i>
+                                <input type="email" id="login-email" placeholder="casal@exemplo.com" required>
+                            </div>
                         </div>
-                        <div class="grupo-input">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="login-senha" placeholder="Senha" required>
+                        <div class="form-group">
+                            <label>Senha</label>
+                            <div class="input-wrapper">
+                                <i class="fa-solid fa-lock"></i>
+                                <input type="password" id="login-senha" placeholder="••••••••" required>
+                            </div>
                         </div>
-                        <button type="submit" class="btn-primario">Entrar</button>
+                        <button type="submit" class="btn-primary btn-block">Entrar</button>
                     </form>
-                    <p class="trocar-form">Não tem uma conta? <a href="#"
-                            onclick="alternarAuth('cadastro')">Cadastre-se</a></p>
+                    <p class="auth-switch">Ainda não têm conta? <a href="#"
+                            onclick="Auth.alternarTela('cadastro')">Cadastre-se</a></p>
                 </div>
 
                 <div id="secao-cadastro" class="secao-form">
-                    <h2>Crie sua conta</h2>
-                    <p>Comece a planejar a dois hoje mesmo</p>
+                    <h2>Criar Conta</h2>
+                    <p>Comecem a planejar juntos</p>
                     <form id="form-cadastro">
-                        <div class="grupo-input">
-                            <i class="fa-regular fa-user"></i>
-                            <input type="text" id="cadastro-nome" placeholder="Nome" required>
+                        <div class="form-group">
+                            <label>Nome do Casal</label>
+                            <div class="input-wrapper">
+                                <i class="fa-regular fa-user"></i>
+                                <input type="text" id="cadastro-nome" placeholder="Ex: Lucas e Maria" required>
+                            </div>
                         </div>
-                        <div class="grupo-input">
-                            <i class="fa-regular fa-envelope"></i>
-                            <input type="email" id="cadastro-email" placeholder="E-mail" required>
+                        <div class="form-group">
+                            <label>E-mail</label>
+                            <div class="input-wrapper">
+                                <i class="fa-regular fa-envelope"></i>
+                                <input type="email" id="cadastro-email" required>
+                            </div>
                         </div>
-                        <div class="grupo-input">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="cadastro-senha" placeholder="Senha" required>
+                        <div class="form-group">
+                            <label>Senha</label>
+                            <div class="input-wrapper">
+                                <i class="fa-solid fa-lock"></i>
+                                <input type="password" id="cadastro-senha" required>
+                            </div>
                         </div>
-                        <button type="submit" class="btn-primario">Criar Conta</button>
+                        <button type="submit" class="btn-primary btn-block">Finalizar Cadastro</button>
                     </form>
-                    <p class="trocar-form">Já tem uma conta? <a href="#" onclick="alternarAuth('login')">Faça login</a>
-                    </p>
+                    <p class="auth-switch">Já possuem conta? <a href="#" onclick="Auth.alternarTela('login')">Fazer
+                            Login</a></p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Tela Principal do App -->
+    <!-- TELA PRINCIPAL (SPA) -->
     <div id="tela-app" class="tela">
-        <aside class="menu-lateral painel-vidro">
-            <div class="cabecalho-menu">
-                <h2><i class="fa-solid fa-heart"></i> PlannerDuo</h2>
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fa-solid fa-heart logo-icon"></i>
+                <h2>PlannerDuo</h2>
             </div>
-            <nav class="navegacao-menu">
-                <a href="#" class="item-nav ativo" data-alvo="dashboard"><i class="fa-solid fa-chart-pie"></i> Visão
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item ativo" data-alvo="dashboard"><i class="fa-solid fa-chart-pie"></i> Visão
                     Geral</a>
-                <a href="#" class="item-nav" data-alvo="viagens"><i class="fa-solid fa-plane"></i> Central de
+                <a href="#" class="nav-item" data-alvo="viagens"><i class="fa-solid fa-plane"></i> Central de
                     Viagens</a>
-                <a href="#" class="item-nav" data-alvo="financas"><i class="fa-solid fa-coins"></i> Finanças</a>
-                <a href="#" class="item-nav" data-alvo="metas"><i class="fa-solid fa-bullseye"></i> Metas</a>
+                <a href="#" class="nav-item" data-alvo="financas"><i class="fa-solid fa-coins"></i> Finanças</a>
+                <a href="#" class="nav-item" data-alvo="metas"><i class="fa-solid fa-bullseye"></i> Metas do Casal</a>
             </nav>
-            <div class="rodape-menu">
-                <div class="info-usuario">
+            <div class="sidebar-footer">
+                <div class="user-info">
                     <div class="avatar"><i class="fa-solid fa-user"></i></div>
                     <span id="saudacao-usuario">Olá, Casal</span>
                 </div>
-                <button id="btn-sair" class="btn-icone" title="Sair"><i
+                <button onclick="Auth.logout()" class="btn-icon" title="Sair"><i
                         class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </aside>
 
-        <main class="conteudo-principal">
-            <header class="cabecalho-mobile painel-vidro">
-                <h2><i class="fa-solid fa-heart"></i> PlannerDuo</h2>
-                <button id="btn-menu-mobile" class="btn-icone"><i class="fa-solid fa-bars"></i></button>
+        <main class="main-content">
+            <header class="mobile-header">
+                <div class="logo-header">
+                    <i class="fa-solid fa-heart logo-icon"></i>
+                    <h2>PlannerDuo</h2>
+                </div>
+                <button id="btn-menu-mobile" class="btn-icon"><i class="fa-solid fa-bars"></i></button>
             </header>
 
-            <!-- Dashboard -->
+            <!-- DASHBOARD -->
             <section id="dashboard" class="view ativa">
-                <h2 class="titulo-view">Visão Geral</h2>
-                <div class="grid-dashboard">
-                    <div class="cartao-estatistica painel-vidro">
-                        <div class="icone-estatistica"><i class="fa-solid fa-plane-departure"></i></div>
-                        <div class="info-estatistica">
+                <div class="view-header">
+                    <h2 class="view-title">Visão Geral</h2>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="stat-card card-flat">
+                        <div class="stat-icon"><i class="fa-solid fa-plane-departure"></i></div>
+                        <div class="stat-info">
                             <h3>Próxima Viagem</h3>
-                            <p id="estatistica-viagem">Nenhuma agendada</p>
+                            <p id="stat-next-trip">Nenhum agendado</p>
                         </div>
                     </div>
-                    <div class="cartao-estatistica painel-vidro">
-                        <div class="icone-estatistica"><i class="fa-solid fa-money-bill-wave"></i></div>
-                        <div class="info-estatistica">
+                    <div class="stat-card card-flat">
+                        <div class="stat-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                        <div class="stat-info">
                             <h3>Despesas do Mês</h3>
-                            <p id="estatistica-despesas">R$ 0,00</p>
+                            <p id="stat-expenses" class="text-danger">R$ 0,00</p>
                         </div>
                     </div>
-                    <div class="cartao-estatistica painel-vidro">
-                        <div class="icone-estatistica"><i class="fa-solid fa-list-check"></i></div>
-                        <div class="info-estatistica">
+                    <div class="stat-card card-flat">
+                        <div class="stat-icon"><i class="fa-solid fa-flag-checkered"></i></div>
+                        <div class="stat-info">
                             <h3>Metas Ativas</h3>
-                            <p id="estatistica-metas">0</p>
+                            <p id="stat-goals">0</p>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Central de Viagens -->
+            <!-- CENTRAL DE VIAGENS -->
             <section id="viagens" class="view">
-                <div class="cabecalho-view">
-                    <h2 class="titulo-view">Central de Viagens</h2>
-                    <button class="btn-primario" onclick="abrirModal('modal-viagem')"><i class="fa-solid fa-plus"></i>
-                        Novo Plano</button>
+                <div class="view-header">
+                    <h2 class="view-title">Central de Viagens</h2>
+                    <button class="btn-primary" onclick="UI.abrirModal('modal-viagem')"><i class="fa-solid fa-plus"></i>
+                        Salvar Roteiro</button>
                 </div>
 
-                <!-- Hub de Buscas Inteligentes -->
-                <div class="hub-viagens painel-vidro">
-                    <h3><i class="fa-solid fa-magnifying-glass-location"></i> Busca Rápida de Passagens e Hospedagem
-                    </h3>
-                    <div class="hub-pesquisa">
-                        <input type="text" id="busca-destino"
-                            placeholder="Para onde querem ir? (Ex: Ouro Preto, Paris)">
-                        <div class="hub-botoes">
-                            <button onclick="buscarNoSite('airbnb')" class="btn-hub airbnb"><i
-                                    class="fa-brands fa-airbnb"></i> Airbnb</button>
-                            <button onclick="buscarNoSite('onibus')" class="btn-hub bus"><i class="fa-solid fa-bus"></i>
-                                Ônibus (ClickBus)</button>
-                            <button onclick="buscarNoSite('voos')" class="btn-hub plane"><i
-                                    class="fa-solid fa-plane"></i> Voos (Google)</button>
+                <div class="hub-viagens card-flat">
+                    <div class="hub-header">
+                        <h3><i class="fa-solid fa-magnifying-glass-location"></i> Busca Inteligente</h3>
+                    </div>
+                    <div class="hub-form-grid">
+                        <div class="form-group">
+                            <label>Origem</label>
+                            <div class="input-wrapper"><input type="text" id="busca-origem" value="Belo Horizonte">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Destino</label>
+                            <div class="input-wrapper"><input type="text" id="busca-destino"
+                                    placeholder="Ex: Rio de Janeiro"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Data de Ida</label>
+                            <div class="input-wrapper"><input type="date" id="busca-data-ida"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Data de Volta</label>
+                            <div class="input-wrapper"><input type="date" id="busca-data-volta"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Viajantes</label>
+                            <div class="input-wrapper">
+                                <select id="busca-passageiros">
+                                    <option value="2" selected>2 Pessoas (Casal)</option>
+                                    <option value="1">1 Pessoa</option>
+                                    <option value="3">3 Pessoas</option>
+                                    <option value="4">4+ Pessoas</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hub-categorias">
+                        <div class="hub-grupo">
+                            <span class="categoria-label"><i class="fa-solid fa-bed"></i> Hospedagem:</span>
+                            <div class="hub-botoes">
+                                <button onclick="ServicoBusca.redirecionar('airbnb')" class="btn-hub btn-airbnb"><i
+                                        class="fa-brands fa-airbnb"></i> Airbnb</button>
+                                <button onclick="ServicoBusca.redirecionar('booking')" class="btn-hub btn-booking"><i
+                                        class="fa-solid fa-hotel"></i> Booking</button>
+                            </div>
+                        </div>
+                        <div class="hub-grupo">
+                            <span class="categoria-label"><i class="fa-solid fa-plane"></i> Voos:</span>
+                            <div class="hub-botoes">
+                                <button onclick="ServicoBusca.redirecionar('googleflights')"
+                                    class="btn-hub btn-googleflights"><i class="fa-brands fa-google"></i> Google
+                                    Voos</button>
+                                <button onclick="ServicoBusca.redirecionar('azul')" class="btn-hub btn-azul"><i
+                                        class="fa-solid fa-plane-up"></i> Azul</button>
+                                <button onclick="ServicoBusca.redirecionar('gol')" class="btn-hub btn-gol"><i
+                                        class="fa-solid fa-plane-departure"></i> Gol</button>
+                                <button onclick="ServicoBusca.redirecionar('latam')" class="btn-hub btn-latam"><i
+                                        class="fa-solid fa-plane-circle-check"></i> LATAM</button>
+                                <button onclick="ServicoBusca.redirecionar('decolar')" class="btn-hub btn-decolar"><i
+                                        class="fa-solid fa-ticket"></i> Decolar</button>
+                            </div>
+                        </div>
+                        <div class="hub-grupo">
+                            <span class="categoria-label"><i class="fa-solid fa-bus"></i> Ônibus:</span>
+                            <div class="hub-botoes">
+                                <button onclick="ServicoBusca.redirecionar('buser')" class="btn-hub btn-buser"><i
+                                        class="fa-solid fa-bus-simple"></i> Buser</button>
+                                <button onclick="ServicoBusca.redirecionar('clickbus')" class="btn-hub btn-clickbus"><i
+                                        class="fa-solid fa-bus"></i> ClickBus</button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="lista-viagens" class="grid-cartoes"></div>
+                <div id="lista-viagens" class="cards-grid"></div>
             </section>
 
-            <!-- Finanças -->
+            <!-- FINANÇAS -->
             <section id="financas" class="view">
-                <div class="cabecalho-view">
-                    <h2 class="titulo-view">Finanças Compartilhadas</h2>
-                    <button class="btn-primario" onclick="abrirModal('modal-financa')"><i class="fa-solid fa-plus"></i>
-                        Nova Transação</button>
+                <div class="view-header">
+                    <h2 class="view-title">Finanças Compartilhadas</h2>
+                    <button class="btn-primary" onclick="UI.abrirModal('modal-financa')"><i
+                            class="fa-solid fa-plus"></i> Nova Transação</button>
                 </div>
-                <div class="resumo-financas painel-vidro">
-                    <div class="item-resumo">
-                        <span>Receitas</span>
-                        <h3 id="total-receitas" class="texto-sucesso">R$ 0,00</h3>
+
+                <div class="finance-summary card-flat">
+                    <div class="summary-item">
+                        <span class="summary-label">Total de Entradas</span>
+                        <h3 id="total-receitas" class="text-success">R$ 0,00</h3>
                     </div>
-                    <div class="item-resumo">
-                        <span>Despesas</span>
-                        <h3 id="total-despesas" class="texto-perigo">R$ 0,00</h3>
+                    <div class="summary-item center">
+                        <span class="summary-label">Total de Saídas</span>
+                        <h3 id="total-despesas" class="text-danger">R$ 0,00</h3>
                     </div>
-                    <div class="item-resumo">
-                        <span>Saldo Total</span>
-                        <h3 id="total-saldo">R$ 0,00</h3>
+                    <div class="summary-item right">
+                        <span class="summary-label">Saldo em Caixa</span>
+                        <h3 id="total-saldo" class="text-success">R$ 0,00</h3>
                     </div>
                 </div>
-                <div class="container-lista painel-vidro">
-                    <table class="tabela-dados">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Descrição</th>
-                                <th>Responsável</th>
-                                <th>Valor</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lista-financas"></tbody>
-                    </table>
+
+                <div class="card-flat" style="padding: 0; overflow: hidden;">
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Descrição</th>
+                                    <th>Responsável</th>
+                                    <th>Valor</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-financas"></tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 
-            <!-- Metas -->
+            <!-- METAS -->
             <section id="metas" class="view">
-                <div class="cabecalho-view">
-                    <h2 class="titulo-view">Metas do Casal</h2>
-                    <button class="btn-primario" onclick="abrirModal('modal-meta')"><i class="fa-solid fa-plus"></i>
+                <div class="view-header">
+                    <h2 class="view-title">Metas do Casal</h2>
+                    <button class="btn-primary" onclick="UI.abrirModal('modal-meta')"><i class="fa-solid fa-plus"></i>
                         Nova Meta</button>
                 </div>
-                <div id="lista-metas" class="grid-cartoes"></div>
+                <div id="lista-metas" class="cards-grid"></div>
             </section>
         </main>
     </div>
 
-    <!-- Modais -->
-    <div id="modal-viagem" class="overlay-modal">
-        <div class="modal painel-vidro">
-            <div class="cabecalho-modal">
-                <h3>Planejar Viagem</h3>
-                <button type="button" class="btn-fechar" onclick="fecharModal('modal-viagem')"><i
+    <!-- MODAIS -->
+    <div id="modal-viagem" class="modal-overlay">
+        <div class="modal card-flat">
+            <div class="modal-header">
+                <h3>Salvar Viagem</h3>
+                <button type="button" class="btn-close" onclick="UI.fecharModal('modal-viagem')"><i
                         class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="form-viagem">
-                <div class="grupo-form">
+                <div class="form-group">
                     <label>Destino</label>
-                    <input type="text" id="viagem-destino" required>
+                    <div class="input-wrapper"><i class="fa-solid fa-map-pin"></i><input type="text" id="viagem-destino"
+                            required></div>
                 </div>
-                <div class="linha-form">
-                    <div class="grupo-form">
+                <div class="form-row">
+                    <div class="form-group">
                         <label>Data de Ida</label>
-                        <input type="date" id="viagem-ida" required>
+                        <div class="input-wrapper"><input type="date" id="viagem-ida" required></div>
                     </div>
-                    <div class="grupo-form">
+                    <div class="form-group">
                         <label>Data de Volta</label>
-                        <input type="date" id="viagem-volta" required>
+                        <div class="input-wrapper"><input type="date" id="viagem-volta" required></div>
                     </div>
                 </div>
-                <div class="grupo-form">
-                    <label>Link Salvo (Airbnb, Passagem, etc)</label>
-                    <input type="url" id="viagem-link" placeholder="Cole o link da reserva aqui">
+                <div class="form-group">
+                    <label>Link da Reserva (Opcional)</label>
+                    <div class="input-wrapper"><i class="fa-solid fa-link"></i><input type="url" id="viagem-link"
+                            placeholder="https://..."></div>
                 </div>
-                <div class="grupo-form">
+                <div class="form-group">
                     <label>Orçamento Estimado (R$)</label>
-                    <input type="number" id="viagem-orcamento" step="0.01" required>
+                    <div class="input-wrapper"><i class="fa-solid fa-dollar-sign"></i><input type="number"
+                            id="viagem-orcamento" step="0.01" required></div>
                 </div>
-                <div class="rodape-modal">
-                    <button type="button" class="btn-secundario" onclick="fecharModal('modal-viagem')">Cancelar</button>
-                    <button type="submit" class="btn-primario">Salvar</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" onclick="UI.fecharModal('modal-viagem')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Viagem</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal Finanças -->
-    <div id="modal-financa" class="overlay-modal">
-        <div class="modal painel-vidro">
-            <div class="cabecalho-modal">
-                <h3>Nova Transação</h3>
-                <button type="button" class="btn-fechar" onclick="fecharModal('modal-financa')"><i
+    <div id="modal-financa" class="modal-overlay">
+        <div class="modal card-flat">
+            <div class="modal-header">
+                <h3>Registrar Transação</h3>
+                <button type="button" class="btn-close" onclick="UI.fecharModal('modal-financa')"><i
                         class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="form-financa">
-                <div class="grupo-form">
+                <div class="form-group">
                     <label>Descrição</label>
-                    <input type="text" id="financa-desc" placeholder="Ex: Passagens aéreas, Aluguel" required>
+                    <div class="input-wrapper"><i class="fa-solid fa-tag"></i><input type="text" id="financa-desc"
+                            placeholder="Ex: Supermercado" required></div>
                 </div>
-                <div class="linha-form">
-                    <div class="grupo-form">
+                <div class="form-row">
+                    <div class="form-group">
                         <label>Tipo</label>
-                        <select id="financa-tipo" required>
-                            <option value="despesa">Despesa</option>
-                            <option value="receita">Receita</option>
-                        </select>
+                        <div class="input-wrapper">
+                            <select id="financa-tipo" required>
+                                <option value="despesa">Despesa (Saída)</option>
+                                <option value="receita">Receita (Entrada)</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="grupo-form">
+                    <div class="form-group">
                         <label>Valor (R$)</label>
-                        <input type="number" id="financa-valor" step="0.01" required>
+                        <div class="input-wrapper"><i class="fa-solid fa-dollar-sign"></i><input type="number"
+                                id="financa-valor" step="0.01" required></div>
                     </div>
                 </div>
-                <div class="grupo-form">
-                    <label>Responsável</label>
-                    <select id="financa-resp" required>
-                        <option value="Eu">Eu</option>
-                        <option value="Ele(a)">Ele(a)</option>
-                        <option value="Ambos">Ambos (Dividido)</option>
-                    </select>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Responsável</label>
+                        <div class="input-wrapper">
+                            <select id="financa-resp" required>
+                                <option value="Eu">Eu</option>
+                                <option value="Ele(a)">Ele(a)</option>
+                                <option value="Ambos">Ambos (Dividido)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Data</label>
+                        <div class="input-wrapper"><input type="date" id="financa-data" required></div>
+                    </div>
                 </div>
-                <div class="grupo-form">
-                    <label>Data</label>
-                    <input type="date" id="financa-data" required>
-                </div>
-                <div class="rodape-modal">
-                    <button type="button" class="btn-secundario"
-                        onclick="fecharModal('modal-financa')">Cancelar</button>
-                    <button type="submit" class="btn-primario">Salvar</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline"
+                        onclick="UI.fecharModal('modal-financa')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal Metas -->
-    <div id="modal-meta" class="overlay-modal">
-        <div class="modal painel-vidro">
-            <div class="cabecalho-modal">
+    <div id="modal-meta" class="modal-overlay">
+        <div class="modal card-flat">
+            <div class="modal-header">
                 <h3>Nova Meta do Casal</h3>
-                <button type="button" class="btn-fechar" onclick="fecharModal('modal-meta')"><i
+                <button type="button" class="btn-close" onclick="UI.fecharModal('modal-meta')"><i
                         class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="form-meta">
-                <div class="grupo-form">
+                <div class="form-group">
                     <label>Título da Meta</label>
-                    <input type="text" id="meta-titulo" placeholder="Ex: Trocar de carro, Viagem pra Europa" required>
+                    <div class="input-wrapper"><i class="fa-solid fa-bullseye"></i><input type="text" id="meta-titulo"
+                            required></div>
                 </div>
-                <div class="grupo-form">
-                    <label>Prazo Estimado</label>
-                    <input type="date" id="meta-prazo" required>
+                <div class="form-group">
+                    <label>Prazo Limite</label>
+                    <div class="input-wrapper"><input type="date" id="meta-prazo" required></div>
                 </div>
-                <div class="rodape-modal">
-                    <button type="button" class="btn-secundario" onclick="fecharModal('modal-meta')">Cancelar</button>
-                    <button type="submit" class="btn-primario">Salvar</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" onclick="UI.fecharModal('modal-meta')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Criar Meta</button>
                 </div>
             </form>
         </div>
