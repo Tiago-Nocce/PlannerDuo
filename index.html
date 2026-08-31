@@ -1,169 +1,194 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlannerDuo</title>
+    <title>PlannerDuo - Finanças e Viagens</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;800&display=swap" rel="stylesheet">
 </head>
+
 <body>
-    <div class="background-animation">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
+    <!-- Animações de fundo baseadas no AgendaCar -->
+    <div class="background-visuals">
+        <div class="tech-grid"></div>
+        <div class="side-glow side-glow-left"></div>
+        <div class="side-glow side-glow-right"></div>
     </div>
 
-    <!-- Toast Notifications -->
-    <div id="toast-container"></div>
+    <div id="container-notificacao"></div>
 
-    <!-- Auth Screen -->
-    <div id="auth-container" class="screen active">
-        <div class="auth-wrapper glass-panel">
-            <div class="auth-info">
+    <!-- Tela de Autenticação -->
+    <div id="tela-autenticacao" class="tela ativa">
+        <div class="wrapper-autenticacao painel-vidro">
+            <div class="info-autenticacao">
                 <h1><i class="fa-solid fa-heart"></i> PlannerDuo</h1>
-                <h2>Organize sua vida a dois</h2>
-                <p>Planeje suas finanças, defina metas conjuntas, organize viagens inesquecíveis e tenha tudo sob controle em um só lugar.</p>
-                <ul class="auth-features">
-                    <li><i class="fa-solid fa-chart-pie"></i> Finanças Compartilhadas</li>
-                    <li><i class="fa-solid fa-plane"></i> Gestão de Viagens</li>
+                <h2>Gestão a dois simplificada</h2>
+                <p>Planeje suas finanças, defina metas conjuntas, organize viagens, aluguéis de Airbnb e passagens em um
+                    só lugar.</p>
+                <ul class="recursos-autenticacao">
+                    <li><i class="fa-solid fa-coins"></i> Finanças Compartilhadas</li>
+                    <li><i class="fa-solid fa-map-location-dot"></i> Central de Viagens e Airbnb</li>
                     <li><i class="fa-solid fa-bullseye"></i> Metas do Casal</li>
                 </ul>
             </div>
 
-            <div class="auth-forms">
-                <!-- Login Section -->
-                <div id="login-section" class="auth-section active">
+            <div class="formularios-autenticacao">
+                <div id="secao-login" class="secao-form ativa">
                     <h2>Bem-vindo de volta!</h2>
                     <p>Faça login para continuar</p>
-                    <form id="login-form">
-                        <div class="input-group">
+                    <form id="form-login">
+                        <div class="grupo-input">
                             <i class="fa-regular fa-envelope"></i>
                             <input type="email" id="login-email" placeholder="E-mail" required>
                         </div>
-                        <div class="input-group">
+                        <div class="grupo-input">
                             <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="login-password" placeholder="Senha" required>
+                            <input type="password" id="login-senha" placeholder="Senha" required>
                         </div>
-                        <button type="submit" class="btn-primary">Entrar</button>
+                        <button type="submit" class="btn-primario">Entrar</button>
                     </form>
-                    <p class="auth-switch">Não tem uma conta? <a href="#" onclick="toggleAuth('register')">Cadastre-se</a></p>
+                    <p class="trocar-form">Não tem uma conta? <a href="#"
+                            onclick="alternarAuth('cadastro')">Cadastre-se</a></p>
                 </div>
 
-                <!-- Register Section -->
-                <div id="register-section" class="auth-section">
+                <div id="secao-cadastro" class="secao-form">
                     <h2>Crie sua conta</h2>
                     <p>Comece a planejar a dois hoje mesmo</p>
-                    <form id="register-form">
-                        <div class="input-group">
+                    <form id="form-cadastro">
+                        <div class="grupo-input">
                             <i class="fa-regular fa-user"></i>
-                            <input type="text" id="register-name" placeholder="Nome" required>
+                            <input type="text" id="cadastro-nome" placeholder="Nome" required>
                         </div>
-                        <div class="input-group">
+                        <div class="grupo-input">
                             <i class="fa-regular fa-envelope"></i>
-                            <input type="email" id="register-email" placeholder="E-mail" required>
+                            <input type="email" id="cadastro-email" placeholder="E-mail" required>
                         </div>
-                        <div class="input-group">
+                        <div class="grupo-input">
                             <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="register-password" placeholder="Senha" required>
+                            <input type="password" id="cadastro-senha" placeholder="Senha" required>
                         </div>
-                        <button type="submit" class="btn-primary">Criar Conta</button>
+                        <button type="submit" class="btn-primario">Criar Conta</button>
                     </form>
-                    <p class="auth-switch">Já tem uma conta? <a href="#" onclick="toggleAuth('login')">Faça login</a></p>
+                    <p class="trocar-form">Já tem uma conta? <a href="#" onclick="alternarAuth('login')">Faça login</a>
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main App Screen -->
-    <div id="app-screen" class="screen">
-        <aside class="sidebar glass-panel">
-            <div class="sidebar-header">
+    <!-- Tela Principal do App -->
+    <div id="tela-app" class="tela">
+        <aside class="menu-lateral painel-vidro">
+            <div class="cabecalho-menu">
                 <h2><i class="fa-solid fa-heart"></i> PlannerDuo</h2>
             </div>
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-target="dashboard"><i class="fa-solid fa-chart-pie"></i> Visão Geral</a>
-                <a href="#" class="nav-item" data-target="trips"><i class="fa-solid fa-plane"></i> Destinos & Viagens</a>
-                <a href="#" class="nav-item" data-target="finances"><i class="fa-solid fa-coins"></i> Finanças</a>
-                <a href="#" class="nav-item" data-target="goals"><i class="fa-solid fa-bullseye"></i> Metas do Casal</a>
+            <nav class="navegacao-menu">
+                <a href="#" class="item-nav ativo" data-alvo="dashboard"><i class="fa-solid fa-chart-pie"></i> Visão
+                    Geral</a>
+                <a href="#" class="item-nav" data-alvo="viagens"><i class="fa-solid fa-plane"></i> Central de
+                    Viagens</a>
+                <a href="#" class="item-nav" data-alvo="financas"><i class="fa-solid fa-coins"></i> Finanças</a>
+                <a href="#" class="item-nav" data-alvo="metas"><i class="fa-solid fa-bullseye"></i> Metas</a>
             </nav>
-            <div class="sidebar-footer">
-                <div class="user-info">
+            <div class="rodape-menu">
+                <div class="info-usuario">
                     <div class="avatar"><i class="fa-solid fa-user"></i></div>
-                    <span id="user-greeting">Olá, Casal</span>
+                    <span id="saudacao-usuario">Olá, Casal</span>
                 </div>
-                <button id="btn-logout" class="btn-icon" title="Sair"><i class="fa-solid fa-right-from-bracket"></i></button>
+                <button id="btn-sair" class="btn-icone" title="Sair"><i
+                        class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </aside>
 
-        <main class="main-content">
-            <header class="mobile-header glass-panel">
+        <main class="conteudo-principal">
+            <header class="cabecalho-mobile painel-vidro">
                 <h2><i class="fa-solid fa-heart"></i> PlannerDuo</h2>
-                <button id="mobile-menu-btn" class="btn-icon"><i class="fa-solid fa-bars"></i></button>
+                <button id="btn-menu-mobile" class="btn-icone"><i class="fa-solid fa-bars"></i></button>
             </header>
 
-            <!-- Dashboard View -->
-            <section id="dashboard" class="view active">
-                <h2 class="view-title">Visão Geral</h2>
-                <div class="dashboard-grid">
-                    <div class="stat-card glass-panel">
-                        <div class="stat-icon"><i class="fa-solid fa-plane-departure"></i></div>
-                        <div class="stat-info">
+            <!-- Dashboard -->
+            <section id="dashboard" class="view ativa">
+                <h2 class="titulo-view">Visão Geral</h2>
+                <div class="grid-dashboard">
+                    <div class="cartao-estatistica painel-vidro">
+                        <div class="icone-estatistica"><i class="fa-solid fa-plane-departure"></i></div>
+                        <div class="info-estatistica">
                             <h3>Próxima Viagem</h3>
-                            <p id="stat-next-trip">Nenhuma agendada</p>
+                            <p id="estatistica-viagem">Nenhuma agendada</p>
                         </div>
                     </div>
-                    <div class="stat-card glass-panel">
-                        <div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
-                        <div class="stat-info">
+                    <div class="cartao-estatistica painel-vidro">
+                        <div class="icone-estatistica"><i class="fa-solid fa-money-bill-wave"></i></div>
+                        <div class="info-estatistica">
                             <h3>Despesas do Mês</h3>
-                            <p id="stat-expenses">R$ 0,00</p>
+                            <p id="estatistica-despesas">R$ 0,00</p>
                         </div>
                     </div>
-                    <div class="stat-card glass-panel">
-                        <div class="stat-icon"><i class="fa-solid fa-list-check"></i></div>
-                        <div class="stat-info">
+                    <div class="cartao-estatistica painel-vidro">
+                        <div class="icone-estatistica"><i class="fa-solid fa-list-check"></i></div>
+                        <div class="info-estatistica">
                             <h3>Metas Ativas</h3>
-                            <p id="stat-goals">0</p>
+                            <p id="estatistica-metas">0</p>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Trips View -->
-            <section id="trips" class="view">
-                <div class="view-header">
-                    <h2 class="view-title">Destinos & Viagens</h2>
-                    <button class="btn-primary" onclick="openModal('modal-trip')"><i class="fa-solid fa-plus"></i> Nova Viagem</button>
+            <!-- Central de Viagens -->
+            <section id="viagens" class="view">
+                <div class="cabecalho-view">
+                    <h2 class="titulo-view">Central de Viagens</h2>
+                    <button class="btn-primario" onclick="abrirModal('modal-viagem')"><i class="fa-solid fa-plus"></i>
+                        Novo Plano</button>
                 </div>
-                <div id="trips-list" class="cards-grid">
-                    <!-- Cards will be injected here -->
+
+                <!-- Hub de Buscas Inteligentes -->
+                <div class="hub-viagens painel-vidro">
+                    <h3><i class="fa-solid fa-magnifying-glass-location"></i> Busca Rápida de Passagens e Hospedagem
+                    </h3>
+                    <div class="hub-pesquisa">
+                        <input type="text" id="busca-destino"
+                            placeholder="Para onde querem ir? (Ex: Ouro Preto, Paris)">
+                        <div class="hub-botoes">
+                            <button onclick="buscarNoSite('airbnb')" class="btn-hub airbnb"><i
+                                    class="fa-brands fa-airbnb"></i> Airbnb</button>
+                            <button onclick="buscarNoSite('onibus')" class="btn-hub bus"><i class="fa-solid fa-bus"></i>
+                                Ônibus (ClickBus)</button>
+                            <button onclick="buscarNoSite('voos')" class="btn-hub plane"><i
+                                    class="fa-solid fa-plane"></i> Voos (Google)</button>
+                        </div>
+                    </div>
                 </div>
+
+                <div id="lista-viagens" class="grid-cartoes"></div>
             </section>
 
-            <!-- Finances View -->
-            <section id="finances" class="view">
-                <div class="view-header">
-                    <h2 class="view-title">Finanças Compartilhadas</h2>
-                    <button class="btn-primary" onclick="openModal('modal-finance')"><i class="fa-solid fa-plus"></i> Nova Transação</button>
+            <!-- Finanças -->
+            <section id="financas" class="view">
+                <div class="cabecalho-view">
+                    <h2 class="titulo-view">Finanças Compartilhadas</h2>
+                    <button class="btn-primario" onclick="abrirModal('modal-financa')"><i class="fa-solid fa-plus"></i>
+                        Nova Transação</button>
                 </div>
-                <div class="finance-summary glass-panel">
-                    <div class="summary-item">
+                <div class="resumo-financas painel-vidro">
+                    <div class="item-resumo">
                         <span>Receitas</span>
-                        <h3 id="total-income" class="text-success">R$ 0,00</h3>
+                        <h3 id="total-receitas" class="texto-sucesso">R$ 0,00</h3>
                     </div>
-                    <div class="summary-item">
+                    <div class="item-resumo">
                         <span>Despesas</span>
-                        <h3 id="total-expense" class="text-danger">R$ 0,00</h3>
+                        <h3 id="total-despesas" class="texto-perigo">R$ 0,00</h3>
                     </div>
-                    <div class="summary-item">
-                        <span>Saldo</span>
-                        <h3 id="total-balance">R$ 0,00</h3>
+                    <div class="item-resumo">
+                        <span>Saldo Total</span>
+                        <h3 id="total-saldo">R$ 0,00</h3>
                     </div>
                 </div>
-                <div class="list-container glass-panel">
-                    <table class="data-table">
+                <div class="container-lista painel-vidro">
+                    <table class="tabela-dados">
                         <thead>
                             <tr>
                                 <th>Data</th>
@@ -173,129 +198,129 @@
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="finances-list">
-                            <!-- Rows will be injected here -->
-                        </tbody>
+                        <tbody id="lista-financas"></tbody>
                     </table>
                 </div>
             </section>
 
-            <!-- Goals View -->
-            <section id="goals" class="view">
-                <div class="view-header">
-                    <h2 class="view-title">Metas do Casal</h2>
-                    <button class="btn-primary" onclick="openModal('modal-goal')"><i class="fa-solid fa-plus"></i> Nova Meta</button>
+            <!-- Metas -->
+            <section id="metas" class="view">
+                <div class="cabecalho-view">
+                    <h2 class="titulo-view">Metas do Casal</h2>
+                    <button class="btn-primario" onclick="abrirModal('modal-meta')"><i class="fa-solid fa-plus"></i>
+                        Nova Meta</button>
                 </div>
-                <div id="goals-list" class="cards-grid">
-                    <!-- Cards will be injected here -->
-                </div>
+                <div id="lista-metas" class="grid-cartoes"></div>
             </section>
         </main>
     </div>
 
-    <!-- Modals -->
-    <!-- Trip Modal -->
-    <div id="modal-trip" class="modal-overlay">
-        <div class="modal glass-panel">
-            <div class="modal-header">
-                <h3>Nova Viagem</h3>
-                <button type="button" class="btn-close" onclick="closeModal('modal-trip')"><i class="fa-solid fa-xmark"></i></button>
+    <!-- Modais -->
+    <div id="modal-viagem" class="overlay-modal">
+        <div class="modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3>Planejar Viagem</h3>
+                <button type="button" class="btn-fechar" onclick="fecharModal('modal-viagem')"><i
+                        class="fa-solid fa-xmark"></i></button>
             </div>
-            <form id="form-trip">
-                <div class="form-group">
+            <form id="form-viagem">
+                <div class="grupo-form">
                     <label>Destino</label>
-                    <input type="text" id="trip-destination" required>
+                    <input type="text" id="viagem-destino" required>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
+                <div class="linha-form">
+                    <div class="grupo-form">
                         <label>Data de Ida</label>
-                        <input type="date" id="trip-start" required>
+                        <input type="date" id="viagem-ida" required>
                     </div>
-                    <div class="form-group">
+                    <div class="grupo-form">
                         <label>Data de Volta</label>
-                        <input type="date" id="trip-end" required>
+                        <input type="date" id="viagem-volta" required>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Link de Hospedagem (Opcional)</label>
-                    <input type="url" id="trip-link" placeholder="Ex: link do Airbnb ou Booking">
+                <div class="grupo-form">
+                    <label>Link Salvo (Airbnb, Passagem, etc)</label>
+                    <input type="url" id="viagem-link" placeholder="Cole o link da reserva aqui">
                 </div>
-                <div class="form-group">
+                <div class="grupo-form">
                     <label>Orçamento Estimado (R$)</label>
-                    <input type="number" id="trip-budget" step="0.01" required>
+                    <input type="number" id="viagem-orcamento" step="0.01" required>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary" onclick="closeModal('modal-trip')">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar Viagem</button>
+                <div class="rodape-modal">
+                    <button type="button" class="btn-secundario" onclick="fecharModal('modal-viagem')">Cancelar</button>
+                    <button type="submit" class="btn-primario">Salvar</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Finance Modal -->
-    <div id="modal-finance" class="modal-overlay">
-        <div class="modal glass-panel">
-            <div class="modal-header">
+    <!-- Modal Finanças -->
+    <div id="modal-financa" class="overlay-modal">
+        <div class="modal painel-vidro">
+            <div class="cabecalho-modal">
                 <h3>Nova Transação</h3>
-                <button type="button" class="btn-close" onclick="closeModal('modal-finance')"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" class="btn-fechar" onclick="fecharModal('modal-financa')"><i
+                        class="fa-solid fa-xmark"></i></button>
             </div>
-            <form id="form-finance">
-                <div class="form-group">
+            <form id="form-financa">
+                <div class="grupo-form">
                     <label>Descrição</label>
-                    <input type="text" id="finance-desc" placeholder="Ex: Mercado, Aluguel" required>
+                    <input type="text" id="financa-desc" placeholder="Ex: Passagens aéreas, Aluguel" required>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
+                <div class="linha-form">
+                    <div class="grupo-form">
                         <label>Tipo</label>
-                        <select id="finance-type" required>
-                            <option value="expense">Despesa</option>
-                            <option value="income">Receita</option>
+                        <select id="financa-tipo" required>
+                            <option value="despesa">Despesa</option>
+                            <option value="receita">Receita</option>
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div class="grupo-form">
                         <label>Valor (R$)</label>
-                        <input type="number" id="finance-value" step="0.01" required>
+                        <input type="number" id="financa-valor" step="0.01" required>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="grupo-form">
                     <label>Responsável</label>
-                    <select id="finance-resp" required>
+                    <select id="financa-resp" required>
                         <option value="Eu">Eu</option>
-                        <option value="Ele/Ela">Ele/Ela</option>
-                        <option value="Ambos">Ambos / Dividido</option>
+                        <option value="Ele(a)">Ele(a)</option>
+                        <option value="Ambos">Ambos (Dividido)</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div class="grupo-form">
                     <label>Data</label>
-                    <input type="date" id="finance-date" required>
+                    <input type="date" id="financa-data" required>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary" onclick="closeModal('modal-finance')">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar Transação</button>
+                <div class="rodape-modal">
+                    <button type="button" class="btn-secundario"
+                        onclick="fecharModal('modal-financa')">Cancelar</button>
+                    <button type="submit" class="btn-primario">Salvar</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Goal Modal -->
-    <div id="modal-goal" class="modal-overlay">
-        <div class="modal glass-panel">
-            <div class="modal-header">
-                <h3>Nova Meta</h3>
-                <button type="button" class="btn-close" onclick="closeModal('modal-goal')"><i class="fa-solid fa-xmark"></i></button>
+    <!-- Modal Metas -->
+    <div id="modal-meta" class="overlay-modal">
+        <div class="modal painel-vidro">
+            <div class="cabecalho-modal">
+                <h3>Nova Meta do Casal</h3>
+                <button type="button" class="btn-fechar" onclick="fecharModal('modal-meta')"><i
+                        class="fa-solid fa-xmark"></i></button>
             </div>
-            <form id="form-goal">
-                <div class="form-group">
+            <form id="form-meta">
+                <div class="grupo-form">
                     <label>Título da Meta</label>
-                    <input type="text" id="goal-title" placeholder="Ex: Comprar um carro" required>
+                    <input type="text" id="meta-titulo" placeholder="Ex: Trocar de carro, Viagem pra Europa" required>
                 </div>
-                <div class="form-group">
+                <div class="grupo-form">
                     <label>Prazo Estimado</label>
-                    <input type="date" id="goal-deadline" required>
+                    <input type="date" id="meta-prazo" required>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary" onclick="closeModal('modal-goal')">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar Meta</button>
+                <div class="rodape-modal">
+                    <button type="button" class="btn-secundario" onclick="fecharModal('modal-meta')">Cancelar</button>
+                    <button type="submit" class="btn-primario">Salvar</button>
                 </div>
             </form>
         </div>
@@ -303,4 +328,5 @@
 
     <script src="app.js"></script>
 </body>
+
 </html>

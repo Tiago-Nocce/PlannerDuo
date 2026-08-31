@@ -1,393 +1,388 @@
-// --- Estado da Aplicação e Configurações ---
-const state = {
-    user: null,
-    trips: JSON.parse(localStorage.getItem('planner_viagens')) || [],
-    finances: JSON.parse(localStorage.getItem('planner_financas')) || [],
-    goals: JSON.parse(localStorage.getItem('planner_metas')) || []
+// --- Estado da Aplicação ---
+const estado = {
+    usuario: null,
+    viagens: JSON.parse(localStorage.getItem('planner_viagens')) || [],
+    financas: JSON.parse(localStorage.getItem('planner_financas')) || [],
+    metas: JSON.parse(localStorage.getItem('planner_metas')) || []
 };
 
-// Utilidades para gerar ID único
-const generateId = () => '_' + Math.random().toString(36).substr(2, 9);
+const gerarId = () => '_' + Math.random().toString(36).substr(2, 9);
 
-// Formatação de Moeda e Data
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+const formatarMoeda = (valor) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
 };
 
-const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const [year, month, day] = dateString.split('-');
-    return `${day}/${month}/${year}`;
+const formatarData = (dataString) => {
+    if (!dataString) return '';
+    const [ano, mes, dia] = dataString.split('-');
+    return `${dia}/${mes}/${ano}`;
 };
 
 // --- Inicialização ---
 document.addEventListener('DOMContentLoaded', () => {
-    checkLogin();
-    setupEventListeners();
+    verificarLogin();
+    configurarEventos();
 });
 
-// --- Autenticação Simples ---
-function checkLogin() {
-    const savedUser = localStorage.getItem('planner_user');
-    const authContainer = document.getElementById('auth-container');
-    if (savedUser) {
-        state.user = savedUser;
-        if(authContainer) authContainer.classList.remove('active');
-        document.getElementById('app-screen').classList.add('active');
-        
-        // Formatar o nome do usuário para ficar mais amigável
-        let formattedName = '';
-        const savedName = localStorage.getItem('planner_name');
-        if (savedName) {
-            formattedName = savedName.split(' ')[0];
+// --- Autenticação ---
+function verificarLogin() {
+    const usuarioSalvo = localStorage.getItem('planner_user');
+    const containerAuth = document.getElementById('tela-autenticacao');
+    const telaApp = document.getElementById('tela-app');
+
+    if (usuarioSalvo) {
+        estado.usuario = usuarioSalvo;
+        if (containerAuth) containerAuth.classList.remove('ativa');
+        if (telaApp) telaApp.classList.add('ativa');
+
+        let nomeFormatado = '';
+        const nomeSalvo = localStorage.getItem('planner_name');
+        if (nomeSalvo) {
+            nomeFormatado = nomeSalvo.split(' ')[0];
         } else {
-            const namePart = savedUser.split('@')[0];
-            formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+            const parteNome = usuarioSalvo.split('@')[0];
+            nomeFormatado = parteNome.charAt(0).toUpperCase() + parteNome.slice(1);
         }
-        document.getElementById('user-greeting').innerText = `Olá, ${formattedName}`;
-        
-        renderAll();
+        document.getElementById('saudacao-usuario').innerText = `Olá, ${nomeFormatado}`;
+
+        renderizarTudo();
     } else {
-        if(authContainer) authContainer.classList.add('active');
-        document.getElementById('app-screen').classList.remove('active');
+        if (containerAuth) containerAuth.classList.add('ativa');
+        if (telaApp) telaApp.classList.remove('ativa');
     }
 }
 
-document.getElementById('login-form').addEventListener('submit', (e) => {
+document.getElementById('form-login')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
-    // Em um app real, faríamos a chamada à API aqui (ex: Firebase Auth / Supabase)
     localStorage.setItem('planner_user', email);
-    showToast('Login realizado com sucesso!', 'success');
-    checkLogin();
+    mostrarNotificacao('Login realizado com sucesso!', 'sucesso');
+    verificarLogin();
 });
 
-// Lógica de Cadastro
-const registerForm = document.getElementById('register-form');
-if (registerForm) {
-    registerForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = document.getElementById('register-name').value;
-        const email = document.getElementById('register-email').value;
-        
-        localStorage.setItem('planner_user', email);
-        localStorage.setItem('planner_name', name);
-        showToast('Conta criada com sucesso!', 'success');
-        checkLogin();
-    });
-}
+document.getElementById('form-cadastro')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nome = document.getElementById('cadastro-nome').value;
+    const email = document.getElementById('cadastro-email').value;
+    localStorage.setItem('planner_user', email);
+    localStorage.setItem('planner_name', nome);
+    mostrarNotificacao('Conta criada com sucesso!', 'sucesso');
+    verificarLogin();
+});
 
-// Alternar entre Login e Cadastro
-window.toggleAuth = (type) => {
-    const loginSection = document.getElementById('login-section');
-    const registerSection = document.getElementById('register-section');
-    
-    if (type === 'register') {
-        loginSection.classList.remove('active');
-        registerSection.classList.add('active');
+window.alternarAuth = (tipo) => {
+    const secaoLogin = document.getElementById('secao-login');
+    const secaoCadastro = document.getElementById('secao-cadastro');
+    if (tipo === 'cadastro') {
+        secaoLogin.classList.remove('ativa');
+        secaoCadastro.classList.add('ativa');
     } else {
-        registerSection.classList.remove('active');
-        loginSection.classList.add('active');
+        secaoCadastro.classList.remove('ativa');
+        secaoLogin.classList.add('ativa');
     }
 };
 
-document.getElementById('btn-logout').addEventListener('click', () => {
+document.getElementById('btn-sair')?.addEventListener('click', () => {
     localStorage.removeItem('planner_user');
-    state.user = null;
-    checkLogin();
+    estado.usuario = null;
+    verificarLogin();
 });
 
 // --- Navegação ---
-function setupEventListeners() {
-    // Menu de navegação
-    document.querySelectorAll('.nav-item').forEach(item => {
+function configurarEventos() {
+    document.querySelectorAll('.item-nav').forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
-            // Remove active classes
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
-            
-            // Add active class to clicked item and target view
-            item.classList.add('active');
-            const targetId = item.getAttribute('data-target');
-            document.getElementById(targetId).classList.add('active');
-            
-            // Close mobile menu if open
-            document.querySelector('.sidebar').classList.remove('open');
-            
-            // Re-render specific view if needed
-            if (targetId === 'dashboard') renderDashboard();
+            document.querySelectorAll('.item-nav').forEach(nav => nav.classList.remove('ativo'));
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('ativa'));
+
+            item.classList.add('ativo');
+            const alvoId = item.getAttribute('data-alvo');
+            document.getElementById(alvoId).classList.add('ativa');
+
+            document.querySelector('.menu-lateral').classList.remove('aberto');
+            if (alvoId === 'dashboard') renderizarDashboard();
         });
     });
 
-    // Mobile menu toggle
-    document.getElementById('mobile-menu-btn').addEventListener('click', () => {
-        document.querySelector('.sidebar').classList.toggle('open');
+    document.getElementById('btn-menu-mobile')?.addEventListener('click', () => {
+        document.querySelector('.menu-lateral').classList.toggle('aberto');
     });
 
-    // Forms
-    document.getElementById('form-trip').addEventListener('submit', handleTripSubmit);
-    document.getElementById('form-finance').addEventListener('submit', handleFinanceSubmit);
-    document.getElementById('form-goal').addEventListener('submit', handleGoalSubmit);
+    document.getElementById('form-viagem')?.addEventListener('submit', submeterViagem);
+    document.getElementById('form-financa')?.addEventListener('submit', submeterFinanca);
+    document.getElementById('form-meta')?.addEventListener('submit', submeterMeta);
 }
 
-// --- Modais ---
-window.openModal = (id) => {
-    document.getElementById(id).classList.add('active');
-}
-
-window.closeModal = (id) => {
-    document.getElementById(id).classList.remove('active');
-    // Limpa o formulário dentro do modal
+// --- Modais e Notificações ---
+window.abrirModal = (id) => document.getElementById(id).classList.add('ativa');
+window.fecharModal = (id) => {
+    document.getElementById(id).classList.remove('ativa');
     const form = document.querySelector(`#${id} form`);
-    if(form) form.reset();
+    if (form) form.reset();
 }
 
-// --- Toasts (Feedback Visual) ---
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container');
+function mostrarNotificacao(mensagem, tipo = 'sucesso') {
+    const container = document.getElementById('container-notificacao');
     const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    
-    const icon = type === 'success' ? 'fa-check-circle' : 'fa-circle-exclamation';
-    
-    toast.innerHTML = `
-        <i class="fa-solid ${icon}"></i>
-        <span>${message}</span>
-    `;
-    
+    toast.className = `toast ${tipo}`;
+    const icone = tipo === 'sucesso' ? 'fa-check-circle' : 'fa-circle-exclamation';
+
+    toast.innerHTML = `<i class="fa-solid ${icone}"></i> <span>${mensagem}</span>`;
     container.appendChild(toast);
-    
+
     setTimeout(() => {
-        toast.classList.add('hide');
+        toast.classList.add('oculto');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
 
-// --- Lógica de Renderização ---
-function renderAll() {
-    renderDashboard();
-    renderTrips();
-    renderFinances();
-    renderGoals();
+// --- Renderização ---
+function renderizarTudo() {
+    renderizarDashboard();
+    renderizarViagens();
+    renderizarFinancas();
+    renderizarMetas();
 }
 
-// 1. Dashboard
-function renderDashboard() {
-    // Próxima Viagem (a mais próxima do dia atual)
-    const futureTrips = state.trips
-        .filter(t => new Date(t.start) >= new Date(new Date().setHours(0,0,0,0)))
-        .sort((a, b) => new Date(a.start) - new Date(b.start));
-    
-    const nextTripEl = document.getElementById('stat-next-trip');
-    if (futureTrips.length > 0) {
-        nextTripEl.innerText = `${futureTrips[0].destination} (${formatDate(futureTrips[0].start)})`;
+function renderizarDashboard() {
+    const viagensFuturas = estado.viagens
+        .filter(v => new Date(v.ida) >= new Date(new Date().setHours(0, 0, 0, 0)))
+        .sort((a, b) => new Date(a.ida) - new Date(b.ida));
+
+    const elemProxViagem = document.getElementById('estatistica-viagem');
+    if (viagensFuturas.length > 0) {
+        elemProxViagem.innerText = `${viagensFuturas[0].destino} (${formatarData(viagensFuturas[0].ida)})`;
     } else {
-        nextTripEl.innerText = "Nenhuma agendada";
+        elemProxViagem.innerText = "Nenhuma agendada";
     }
 
-    // Despesas do mês atual
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    const monthlyExpenses = state.finances
-        .filter(f => f.type === 'expense')
+    const mesAtual = new Date().getMonth();
+    const anoAtual = new Date().getFullYear();
+    const despesasMensais = estado.financas
+        .filter(f => f.tipo === 'despesa')
         .filter(f => {
-            const d = new Date(f.date + 'T00:00:00');
-            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            const d = new Date(f.data + 'T00:00:00');
+            return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
         })
-        .reduce((sum, f) => sum + parseFloat(f.value), 0);
-    
-    document.getElementById('stat-expenses').innerText = formatCurrency(monthlyExpenses);
+        .reduce((soma, f) => soma + parseFloat(f.valor), 0);
 
-    // Metas Ativas
-    const activeGoals = state.goals.filter(g => new Date(g.deadline + 'T00:00:00') >= new Date(new Date().setHours(0,0,0,0))).length;
-    document.getElementById('stat-goals').innerText = activeGoals;
+    document.getElementById('estatistica-despesas').innerText = formatarMoeda(despesasMensais);
+
+    const metasAtivas = estado.metas.filter(m => new Date(m.prazo + 'T00:00:00') >= new Date(new Date().setHours(0, 0, 0, 0))).length;
+    document.getElementById('estatistica-metas').innerText = metasAtivas;
 }
 
-// 2. Viagens
-function handleTripSubmit(e) {
-    e.preventDefault();
-    const newTrip = {
-        id: generateId(),
-        destination: document.getElementById('trip-destination').value,
-        start: document.getElementById('trip-start').value,
-        end: document.getElementById('trip-end').value,
-        link: document.getElementById('trip-link').value,
-        budget: document.getElementById('trip-budget').value
-    };
-    
-    state.trips.push(newTrip);
-    saveData('planner_viagens', state.trips);
-    renderTrips();
-    closeModal('modal-trip');
-    showToast('Viagem salva com sucesso!');
-    renderDashboard();
-}
+// --- Hub de Buscas (Redirecionamento) ---
+window.buscarNoSite = (plataforma) => {
+    const destino = document.getElementById('busca-destino').value.trim();
+    let url = '';
 
-function renderTrips() {
-    const list = document.getElementById('trips-list');
-    list.innerHTML = '';
-    
-    if (state.trips.length === 0) {
-        list.innerHTML = '<p class="text-muted">Nenhuma viagem planejada ainda. Que tal marcar a próxima?</p>';
+    if (!destino && plataforma !== 'voos') {
+        mostrarNotificacao('Por favor, digite um destino primeiro.', 'erro');
         return;
     }
 
-    state.trips.sort((a, b) => new Date(a.start) - new Date(b.start)).forEach(trip => {
+    const destinoFormatado = encodeURIComponent(destino);
+
+    switch (plataforma) {
+        case 'airbnb':
+            url = `https://www.airbnb.com.br/s/${destinoFormatado}/homes`;
+            break;
+        case 'onibus':
+            // Formatação básica para o ClickBus
+            const destinoTraco = destino.toLowerCase().replace(/\s+/g, '-');
+            url = `https://www.clickbus.com.br/onibus/${destinoTraco}`;
+            break;
+        case 'voos':
+            url = destino ? `https://www.google.com/travel/flights?q=voos+para+${destinoFormatado}` : 'https://www.google.com/travel/flights';
+            break;
+    }
+
+    window.open(url, '_blank');
+};
+
+// --- Viagens ---
+function submeterViagem(e) {
+    e.preventDefault();
+    const novaViagem = {
+        id: gerarId(),
+        destino: document.getElementById('viagem-destino').value,
+        ida: document.getElementById('viagem-ida').value,
+        volta: document.getElementById('viagem-volta').value,
+        link: document.getElementById('viagem-link').value,
+        orcamento: document.getElementById('viagem-orcamento').value
+    };
+
+    estado.viagens.push(novaViagem);
+    salvarDados('planner_viagens', estado.viagens);
+    renderizarViagens();
+    fecharModal('modal-viagem');
+    mostrarNotificacao('Viagem salva com sucesso!');
+    renderizarDashboard();
+}
+
+function renderizarViagens() {
+    const lista = document.getElementById('lista-viagens');
+    lista.innerHTML = '';
+
+    if (estado.viagens.length === 0) {
+        lista.innerHTML = '<p style="color: var(--text-muted)">Nenhuma viagem planejada. Busque um destino acima!</p>';
+        return;
+    }
+
+    estado.viagens.sort((a, b) => new Date(a.ida) - new Date(b.ida)).forEach(v => {
         const card = document.createElement('div');
-        card.className = 'card glass-panel';
+        card.className = 'cartao painel-vidro';
         card.innerHTML = `
-            <div class="card-header">
-                <h3 class="card-title">${trip.destination}</h3>
-                <button class="btn-icon text-danger" onclick="deleteItem('trip', '${trip.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+            <div class="cabecalho-cartao">
+                <h3 class="titulo-cartao">${v.destino}</h3>
+                <button class="btn-icone texto-perigo" onclick="excluirItem('viagem', '${v.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
             </div>
-            <div class="card-body">
-                <p><i class="fa-regular fa-calendar"></i> ${formatDate(trip.start)} até ${formatDate(trip.end)}</p>
-                ${trip.link ? `<a href="${trip.link}" target="_blank" class="card-link"><i class="fa-solid fa-link"></i> Ver Hospedagem/Link</a>` : ''}
+            <div class="corpo-cartao">
+                <p><i class="fa-regular fa-calendar"></i> ${formatarData(v.ida)} até ${formatarData(v.volta)}</p>
+                ${v.link ? `<a href="${v.link}" target="_blank" class="link-cartao"><i class="fa-solid fa-arrow-up-right-from-square"></i> Acessar Reserva</a>` : ''}
             </div>
-            <div class="card-footer">
-                <span class="budget-badge">Orçamento: ${formatCurrency(trip.budget)}</span>
+            <div class="rodape-cartao">
+                <span class="badge-orcamento">Orçamento: ${formatarMoeda(v.orcamento)}</span>
             </div>
         `;
-        list.appendChild(card);
+        lista.appendChild(card);
     });
 }
 
-// 3. Finanças
-function handleFinanceSubmit(e) {
+// --- Finanças ---
+function submeterFinanca(e) {
     e.preventDefault();
-    const newFinance = {
-        id: generateId(),
-        desc: document.getElementById('finance-desc').value,
-        type: document.getElementById('finance-type').value,
-        value: document.getElementById('finance-value').value,
-        resp: document.getElementById('finance-resp').value,
-        date: document.getElementById('finance-date').value
+    const novaFinanca = {
+        id: gerarId(),
+        desc: document.getElementById('financa-desc').value,
+        tipo: document.getElementById('financa-tipo').value,
+        valor: document.getElementById('financa-valor').value,
+        resp: document.getElementById('financa-resp').value,
+        data: document.getElementById('financa-data').value
     };
-    
-    state.finances.push(newFinance);
-    saveData('planner_financas', state.finances);
-    renderFinances();
-    closeModal('modal-finance');
-    showToast('Transação registrada com sucesso!');
-    renderDashboard();
+
+    estado.financas.push(novaFinanca);
+    salvarDados('planner_financas', estado.financas);
+    renderizarFinancas();
+    fecharModal('modal-financa');
+    mostrarNotificacao('Transação registrada com sucesso!');
+    renderizarDashboard();
 }
 
-function renderFinances() {
-    const list = document.getElementById('finances-list');
-    list.innerHTML = '';
-    
-    let totalIncome = 0;
-    let totalExpense = 0;
+function renderizarFinancas() {
+    const lista = document.getElementById('lista-financas');
+    lista.innerHTML = '';
 
-    // Sort by date descending
-    const sortedFinances = [...state.finances].sort((a, b) => new Date(b.date) - new Date(a.date));
+    let totalReceitas = 0;
+    let totalDespesas = 0;
 
-    sortedFinances.forEach(item => {
-        const val = parseFloat(item.value);
-        if (item.type === 'income') totalIncome += val;
-        else totalExpense += val;
+    const financasOrdenadas = [...estado.financas].sort((a, b) => new Date(b.data) - new Date(a.data));
+
+    financasOrdenadas.forEach(item => {
+        const val = parseFloat(item.valor);
+        if (item.tipo === 'receita') totalReceitas += val;
+        else totalDespesas += val;
 
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${formatDate(item.date)}</td>
+            <td>${formatarData(item.data)}</td>
             <td>${item.desc}</td>
             <td>${item.resp}</td>
             <td>
-                <span class="badge ${item.type}">
-                    ${item.type === 'income' ? '+' : '-'} ${formatCurrency(val)}
+                <span class="badge ${item.tipo}">
+                    ${item.tipo === 'receita' ? '+' : '-'} ${formatarMoeda(val)}
                 </span>
             </td>
             <td>
-                <button class="btn-icon text-danger" onclick="deleteItem('finance', '${item.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                <button class="btn-icone texto-perigo" onclick="excluirItem('financa', '${item.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
             </td>
         `;
-        list.appendChild(row);
+        lista.appendChild(row);
     });
 
-    if (state.finances.length === 0) {
-        list.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted)">Nenhuma transação registrada.</td></tr>';
+    if (estado.financas.length === 0) {
+        lista.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted)">Nenhuma transação registrada.</td></tr>';
     }
 
-    document.getElementById('total-income').innerText = formatCurrency(totalIncome);
-    document.getElementById('total-expense').innerText = formatCurrency(totalExpense);
-    document.getElementById('total-balance').innerText = formatCurrency(totalIncome - totalExpense);
-    
-    const balanceEl = document.getElementById('total-balance');
-    balanceEl.style.color = (totalIncome - totalExpense) >= 0 ? 'var(--success)' : 'var(--danger)';
+    document.getElementById('total-receitas').innerText = formatarMoeda(totalReceitas);
+    document.getElementById('total-despesas').innerText = formatarMoeda(totalDespesas);
+
+    const saldo = totalReceitas - totalDespesas;
+    const elSaldo = document.getElementById('total-saldo');
+    elSaldo.innerText = formatarMoeda(saldo);
+    elSaldo.className = saldo >= 0 ? 'texto-sucesso' : 'texto-perigo';
 }
 
-// 4. Metas
-function handleGoalSubmit(e) {
+// --- Metas ---
+function submeterMeta(e) {
     e.preventDefault();
-    const newGoal = {
-        id: generateId(),
-        title: document.getElementById('goal-title').value,
-        deadline: document.getElementById('goal-deadline').value
+    const novaMeta = {
+        id: gerarId(),
+        titulo: document.getElementById('meta-titulo').value,
+        prazo: document.getElementById('meta-prazo').value
     };
-    
-    state.goals.push(newGoal);
-    saveData('planner_metas', state.goals);
-    renderGoals();
-    closeModal('modal-goal');
-    showToast('Meta adicionada com sucesso!');
-    renderDashboard();
+
+    estado.metas.push(novaMeta);
+    salvarDados('planner_metas', estado.metas);
+    renderizarMetas();
+    fecharModal('modal-meta');
+    mostrarNotificacao('Meta adicionada com sucesso!');
+    renderizarDashboard();
 }
 
-function renderGoals() {
-    const list = document.getElementById('goals-list');
-    list.innerHTML = '';
-    
-    if (state.goals.length === 0) {
-        list.innerHTML = '<p class="text-muted">Nenhuma meta definida ainda. Sonhem juntos!</p>';
+function renderizarMetas() {
+    const lista = document.getElementById('lista-metas');
+    lista.innerHTML = '';
+
+    if (estado.metas.length === 0) {
+        lista.innerHTML = '<p style="color: var(--text-muted)">Nenhuma meta definida. Comecem a planejar o futuro!</p>';
         return;
     }
 
-    state.goals.sort((a, b) => new Date(a.deadline) - new Date(b.deadline)).forEach(goal => {
+    estado.metas.sort((a, b) => new Date(a.prazo) - new Date(b.prazo)).forEach(m => {
         const card = document.createElement('div');
-        card.className = 'card glass-panel';
-        
-        // Verifica se está atrasado (ajustando timezone)
-        const isLate = new Date(goal.deadline + 'T00:00:00') < new Date(new Date().setHours(0,0,0,0));
-        const statusColor = isLate ? 'var(--danger)' : 'var(--success)';
+        card.className = 'cartao painel-vidro';
+
+        const atrasado = new Date(m.prazo + 'T00:00:00') < new Date(new Date().setHours(0, 0, 0, 0));
+        const corStatus = atrasado ? 'var(--perigo)' : 'var(--sucesso)';
 
         card.innerHTML = `
-            <div class="card-header">
-                <h3 class="card-title">${goal.title}</h3>
-                <button class="btn-icon text-danger" onclick="deleteItem('goal', '${goal.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+            <div class="cabecalho-cartao">
+                <h3 class="titulo-cartao">${m.titulo}</h3>
+                <button class="btn-icone texto-perigo" onclick="excluirItem('meta', '${m.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
             </div>
-            <div class="card-body">
-                <p style="color: ${statusColor}"><i class="fa-regular fa-clock" style="color: ${statusColor}"></i> Prazo: ${formatDate(goal.deadline)} ${isLate ? '(Atrasado)' : ''}</p>
+            <div class="corpo-cartao">
+                <p style="color: ${corStatus}"><i class="fa-regular fa-clock" style="color: ${corStatus}"></i> Prazo: ${formatarData(m.prazo)} ${atrasado ? '(Atrasado)' : ''}</p>
             </div>
         `;
-        list.appendChild(card);
+        lista.appendChild(card);
     });
 }
 
-// --- Funcionalidades Gerais ---
-function saveData(key, data) {
-    // Esta função centraliza o salvamento de dados. 
-    // Em uma refatoração para BaaS (Firebase, Supabase), as integrações iriam aqui.
-    localStorage.setItem(key, JSON.stringify(data));
+// --- Utilitários ---
+function salvarDados(chave, dados) {
+    localStorage.setItem(chave, JSON.stringify(dados));
 }
 
-window.deleteItem = (type, id) => {
+window.excluirItem = (tipo, id) => {
     if (!confirm('Tem certeza que deseja excluir este item?')) return;
 
-    if (type === 'trip') {
-        state.trips = state.trips.filter(t => t.id !== id);
-        saveData('planner_viagens', state.trips);
-        renderTrips();
-    } else if (type === 'finance') {
-        state.finances = state.finances.filter(f => f.id !== id);
-        saveData('planner_financas', state.finances);
-        renderFinances();
-    } else if (type === 'goal') {
-        state.goals = state.goals.filter(g => g.id !== id);
-        saveData('planner_metas', state.goals);
-        renderGoals();
+    if (tipo === 'viagem') {
+        estado.viagens = estado.viagens.filter(v => v.id !== id);
+        salvarDados('planner_viagens', estado.viagens);
+        renderizarViagens();
+    } else if (tipo === 'financa') {
+        estado.financas = estado.financas.filter(f => f.id !== id);
+        salvarDados('planner_financas', estado.financas);
+        renderizarFinancas();
+    } else if (tipo === 'meta') {
+        estado.metas = estado.metas.filter(m => m.id !== id);
+        salvarDados('planner_metas', estado.metas);
+        renderizarMetas();
     }
-    
-    showToast('Item removido.', 'success');
-    renderDashboard();
+
+    mostrarNotificacao('Item removido.', 'sucesso');
+    renderizarDashboard();
 }
