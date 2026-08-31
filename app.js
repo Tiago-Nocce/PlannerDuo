@@ -29,11 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- Autenticação Simples ---
 function checkLogin() {
     const savedUser = localStorage.getItem('planner_user');
-    const registerScreen = document.getElementById('register-screen');
+    const authContainer = document.getElementById('auth-container');
     if (savedUser) {
         state.user = savedUser;
-        document.getElementById('login-screen').classList.remove('active');
-        if(registerScreen) registerScreen.classList.remove('active');
+        if(authContainer) authContainer.classList.remove('active');
         document.getElementById('app-screen').classList.add('active');
         
         // Formatar o nome do usuário para ficar mais amigável
@@ -49,8 +48,7 @@ function checkLogin() {
         
         renderAll();
     } else {
-        document.getElementById('login-screen').classList.add('active');
-        if(registerScreen) registerScreen.classList.remove('active');
+        if(authContainer) authContainer.classList.add('active');
         document.getElementById('app-screen').classList.remove('active');
     }
 }
@@ -81,15 +79,15 @@ if (registerForm) {
 
 // Alternar entre Login e Cadastro
 window.toggleAuth = (type) => {
-    const loginScreen = document.getElementById('login-screen');
-    const registerScreen = document.getElementById('register-screen');
+    const loginSection = document.getElementById('login-section');
+    const registerSection = document.getElementById('register-section');
     
     if (type === 'register') {
-        loginScreen.classList.remove('active');
-        registerScreen.classList.add('active');
+        loginSection.classList.remove('active');
+        registerSection.classList.add('active');
     } else {
-        registerScreen.classList.remove('active');
-        loginScreen.classList.add('active');
+        registerSection.classList.remove('active');
+        loginSection.classList.add('active');
     }
 };
 
