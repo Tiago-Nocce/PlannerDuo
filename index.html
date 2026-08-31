@@ -18,47 +18,61 @@
     <!-- Toast Notifications -->
     <div id="toast-container"></div>
 
-    <!-- Login Screen -->
-    <div id="login-screen" class="screen active glass-panel">
-        <div class="login-box">
-            <h1><i class="fa-solid fa-heart"></i> PlannerDuo</h1>
-            <p>Organize sua vida a dois</p>
-            <form id="login-form">
-                <div class="input-group">
-                    <i class="fa-regular fa-envelope"></i>
-                    <input type="email" id="login-email" placeholder="E-mail" required>
-                </div>
-                <div class="input-group">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="login-password" placeholder="Senha" required>
-                </div>
-                <button type="submit" class="btn-primary">Entrar</button>
-            </form>
-            <p class="auth-switch">Não tem uma conta? <a href="#" onclick="toggleAuth('register')">Cadastre-se</a></p>
-        </div>
-    </div>
+    <!-- Auth Screen -->
+    <div id="auth-container" class="screen active">
+        <div class="auth-wrapper glass-panel">
+            <div class="auth-info">
+                <h1><i class="fa-solid fa-heart"></i> PlannerDuo</h1>
+                <h2>Organize sua vida a dois</h2>
+                <p>Planeje suas finanças, defina metas conjuntas, organize viagens inesquecíveis e tenha tudo sob controle em um só lugar.</p>
+                <ul class="auth-features">
+                    <li><i class="fa-solid fa-chart-pie"></i> Finanças Compartilhadas</li>
+                    <li><i class="fa-solid fa-plane"></i> Gestão de Viagens</li>
+                    <li><i class="fa-solid fa-bullseye"></i> Metas do Casal</li>
+                </ul>
+            </div>
 
-    <!-- Register Screen -->
-    <div id="register-screen" class="screen glass-panel">
-        <div class="login-box">
-            <h1><i class="fa-solid fa-heart"></i> PlannerDuo</h1>
-            <p>Crie sua conta e planeje a dois</p>
-            <form id="register-form">
-                <div class="input-group">
-                    <i class="fa-regular fa-user"></i>
-                    <input type="text" id="register-name" placeholder="Nome" required>
+            <div class="auth-forms">
+                <!-- Login Section -->
+                <div id="login-section" class="auth-section active">
+                    <h2>Bem-vindo de volta!</h2>
+                    <p>Faça login para continuar</p>
+                    <form id="login-form">
+                        <div class="input-group">
+                            <i class="fa-regular fa-envelope"></i>
+                            <input type="email" id="login-email" placeholder="E-mail" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="login-password" placeholder="Senha" required>
+                        </div>
+                        <button type="submit" class="btn-primary">Entrar</button>
+                    </form>
+                    <p class="auth-switch">Não tem uma conta? <a href="#" onclick="toggleAuth('register')">Cadastre-se</a></p>
                 </div>
-                <div class="input-group">
-                    <i class="fa-regular fa-envelope"></i>
-                    <input type="email" id="register-email" placeholder="E-mail" required>
+
+                <!-- Register Section -->
+                <div id="register-section" class="auth-section">
+                    <h2>Crie sua conta</h2>
+                    <p>Comece a planejar a dois hoje mesmo</p>
+                    <form id="register-form">
+                        <div class="input-group">
+                            <i class="fa-regular fa-user"></i>
+                            <input type="text" id="register-name" placeholder="Nome" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fa-regular fa-envelope"></i>
+                            <input type="email" id="register-email" placeholder="E-mail" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="register-password" placeholder="Senha" required>
+                        </div>
+                        <button type="submit" class="btn-primary">Criar Conta</button>
+                    </form>
+                    <p class="auth-switch">Já tem uma conta? <a href="#" onclick="toggleAuth('login')">Faça login</a></p>
                 </div>
-                <div class="input-group">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="register-password" placeholder="Senha" required>
-                </div>
-                <button type="submit" class="btn-primary">Criar Conta</button>
-            </form>
-            <p class="auth-switch">Já tem uma conta? <a href="#" onclick="toggleAuth('login')">Faça login</a></p>
+            </div>
         </div>
     </div>
 
