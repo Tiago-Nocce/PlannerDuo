@@ -1,1 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlannerDuo</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-animation">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
 
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="screen active glass-panel">
+        <div class="login-box">
+            <h1><i class="fa-solid fa-heart"></i> PlannerDuo</h1>
+            <p>Organize sua vida a dois</p>
+            <form id="login-form">
+                <div class="input-group">
+                    <i class="fa-regular fa-envelope"></i>
+                    <input type="email" id="login-email" placeholder="E-mail" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="login-password" placeholder="Senha" required>
+                </div>
+                <button type="submit" class="btn-primary">Entrar</button>
+            </form>
+            <p class="auth-switch">Não tem uma conta? <a href="#" onclick="toggleAuth('register')">Cadastre-se</a></p>
+        </div>
+    </div>
+
+    <!-- Register Screen -->
+    <div id="register-screen" class="screen glass-panel">
+        <div class="login-box">
+            <h1><i class="fa-solid fa-heart"></i> PlannerDuo</h1>
+            <p>Crie sua conta e planeje a dois</p>
+            <form id="register-form">
+                <div class="input-group">
+                    <i class="fa-regular fa-user"></i>
+                    <input type="text" id="register-name" placeholder="Nome" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-regular fa-envelope"></i>
+                    <input type="email" id="register-email" placeholder="E-mail" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="register-password" placeholder="Senha" required>
+                </div>
+                <button type="submit" class="btn-primary">Criar Conta</button>
+            </form>
+            <p class="auth-switch">Já tem uma conta? <a href="#" onclick="toggleAuth('login')">Faça login</a></p>
+        </div>
+    </div>
+
+    <!-- Main App Screen -->
+    <div id="app-screen" class="screen">
+        <aside class="sidebar glass-panel">
+            <div class="sidebar-header">
+                <h2><i class="fa-solid fa-heart"></i> PlannerDuo</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-target="dashboard"><i class="fa-solid fa-chart-pie"></i> Visão Geral</a>
+                <a href="#" class="nav-item" data-target="trips"><i class="fa-solid fa-plane"></i> Destinos & Viagens</a>
+                <a href="#" class="nav-item" data-target="finances"><i class="fa-solid fa-coins"></i> Finanças</a>
+                <a href="#" class="nav-item" data-target="goals"><i class="fa-solid fa-bullseye"></i> Metas do Casal</a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                    <span id="user-greeting">Olá, Casal</span>
+                </div>
+                <button id="btn-logout" class="btn-icon" title="Sair"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="mobile-header glass-panel">
+                <h2><i class="fa-solid fa-heart"></i> PlannerDuo</h2>
+                <button id="mobile-menu-btn" class="btn-icon"><i class="fa-solid fa-bars"></i></button>
+            </header>
+
+            <!-- Dashboard View -->
+            <section id="dashboard" class="view active">
+                <h2 class="view-title">Visão Geral</h2>
+                <div class="dashboard-grid">
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon"><i class="fa-solid fa-plane-departure"></i></div>
+                        <div class="stat-info">
+                            <h3>Próxima Viagem</h3>
+                            <p id="stat-next-trip">Nenhuma agendada</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+                        <div class="stat-info">
+                            <h3>Despesas do Mês</h3>
+                            <p id="stat-expenses">R$ 0,00</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon"><i class="fa-solid fa-list-check"></i></div>
+                        <div class="stat-info">
+                            <h3>Metas Ativas</h3>
+                            <p id="stat-goals">0</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trips View -->
+            <section id="trips" class="view">
+                <div class="view-header">
+                    <h2 class="view-title">Destinos & Viagens</h2>
+                    <button class="btn-primary" onclick="openModal('modal-trip')"><i class="fa-solid fa-plus"></i> Nova Viagem</button>
+                </div>
+                <div id="trips-list" class="cards-grid">
+                    <!-- Cards will be injected here -->
+                </div>
+            </section>
+
+            <!-- Finances View -->
+            <section id="finances" class="view">
+                <div class="view-header">
+                    <h2 class="view-title">Finanças Compartilhadas</h2>
+                    <button class="btn-primary" onclick="openModal('modal-finance')"><i class="fa-solid fa-plus"></i> Nova Transação</button>
+                </div>
+                <div class="finance-summary glass-panel">
+                    <div class="summary-item">
+                        <span>Receitas</span>
+                        <h3 id="total-income" class="text-success">R$ 0,00</h3>
+                    </div>
+                    <div class="summary-item">
+                        <span>Despesas</span>
+                        <h3 id="total-expense" class="text-danger">R$ 0,00</h3>
+                    </div>
+                    <div class="summary-item">
+                        <span>Saldo</span>
+                        <h3 id="total-balance">R$ 0,00</h3>
+                    </div>
+                </div>
+                <div class="list-container glass-panel">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Responsável</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="finances-list">
+                            <!-- Rows will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Goals View -->
+            <section id="goals" class="view">
+                <div class="view-header">
+                    <h2 class="view-title">Metas do Casal</h2>
+                    <button class="btn-primary" onclick="openModal('modal-goal')"><i class="fa-solid fa-plus"></i> Nova Meta</button>
+                </div>
+                <div id="goals-list" class="cards-grid">
+                    <!-- Cards will be injected here -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Trip Modal -->
+    <div id="modal-trip" class="modal-overlay">
+        <div class="modal glass-panel">
+            <div class="modal-header">
+                <h3>Nova Viagem</h3>
+                <button type="button" class="btn-close" onclick="closeModal('modal-trip')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-trip">
+                <div class="form-group">
+                    <label>Destino</label>
+                    <input type="text" id="trip-destination" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data de Ida</label>
+                        <input type="date" id="trip-start" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Data de Volta</label>
+                        <input type="date" id="trip-end" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Link de Hospedagem (Opcional)</label>
+                    <input type="url" id="trip-link" placeholder="Ex: link do Airbnb ou Booking">
+                </div>
+                <div class="form-group">
+                    <label>Orçamento Estimado (R$)</label>
+                    <input type="number" id="trip-budget" step="0.01" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('modal-trip')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Viagem</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Finance Modal -->
+    <div id="modal-finance" class="modal-overlay">
+        <div class="modal glass-panel">
+            <div class="modal-header">
+                <h3>Nova Transação</h3>
+                <button type="button" class="btn-close" onclick="closeModal('modal-finance')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-finance">
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <input type="text" id="finance-desc" placeholder="Ex: Mercado, Aluguel" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select id="finance-type" required>
+                            <option value="expense">Despesa</option>
+                            <option value="income">Receita</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Valor (R$)</label>
+                        <input type="number" id="finance-value" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Responsável</label>
+                    <select id="finance-resp" required>
+                        <option value="Eu">Eu</option>
+                        <option value="Ele/Ela">Ele/Ela</option>
+                        <option value="Ambos">Ambos / Dividido</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="finance-date" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('modal-finance')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Transação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Goal Modal -->
+    <div id="modal-goal" class="modal-overlay">
+        <div class="modal glass-panel">
+            <div class="modal-header">
+                <h3>Nova Meta</h3>
+                <button type="button" class="btn-close" onclick="closeModal('modal-goal')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-goal">
+                <div class="form-group">
+                    <label>Título da Meta</label>
+                    <input type="text" id="goal-title" placeholder="Ex: Comprar um carro" required>
+                </div>
+                <div class="form-group">
+                    <label>Prazo Estimado</label>
+                    <input type="date" id="goal-deadline" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('modal-goal')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Meta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

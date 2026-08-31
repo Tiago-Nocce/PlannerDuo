@@ -29,19 +29,28 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- Autenticação Simples ---
 function checkLogin() {
     const savedUser = localStorage.getItem('planner_user');
+    const registerScreen = document.getElementById('register-screen');
     if (savedUser) {
         state.user = savedUser;
         document.getElementById('login-screen').classList.remove('active');
+        if(registerScreen) registerScreen.classList.remove('active');
         document.getElementById('app-screen').classList.add('active');
         
         // Formatar o nome do usuário para ficar mais amigável
-        const namePart = savedUser.split('@')[0];
-        const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+        let formattedName = '';
+        const savedName = localStorage.getItem('planner_name');
+        if (savedName) {
+            formattedName = savedName.split(' ')[0];
+        } else {
+            const namePart = savedUser.split('@')[0];
+            formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+        }
         document.getElementById('user-greeting').innerText = `Olá, ${formattedName}`;
         
         renderAll();
     } else {
         document.getElementById('login-screen').classList.add('active');
+        if(registerScreen) registerScreen.classList.remove('active');
         document.getElementById('app-screen').classList.remove('active');
     }
 }
@@ -54,6 +63,35 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
     showToast('Login realizado com sucesso!', 'success');
     checkLogin();
 });
+
+// Lógica de Cadastro
+const registerForm = document.getElementById('register-form');
+if (registerForm) {
+    registerForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('register-name').value;
+        const email = document.getElementById('register-email').value;
+        
+        localStorage.setItem('planner_user', email);
+        localStorage.setItem('planner_name', name);
+        showToast('Conta criada com sucesso!', 'success');
+        checkLogin();
+    });
+}
+
+// Alternar entre Login e Cadastro
+window.toggleAuth = (type) => {
+    const loginScreen = document.getElementById('login-screen');
+    const registerScreen = document.getElementById('register-screen');
+    
+    if (type === 'register') {
+        loginScreen.classList.remove('active');
+        registerScreen.classList.add('active');
+    } else {
+        registerScreen.classList.remove('active');
+        loginScreen.classList.add('active');
+    }
+};
 
 document.getElementById('btn-logout').addEventListener('click', () => {
     localStorage.removeItem('planner_user');
