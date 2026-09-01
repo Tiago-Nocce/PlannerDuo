@@ -3,16 +3,13 @@
     --active-blue: #3E4F8B;
     --primary-orange: #E87A3E;
     --orange-hover: #D06930;
-
     --bg-main: #E9EDF4;
     --card-bg: #FFFFFF;
     --text-dark: #1e293b;
     --text-title: #2B3A70;
     --text-light: #94a3b8;
-
     --border-light: #e2e8f0;
-    --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-
+    --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     --success: #22c55e;
     --danger: #ef4444;
 }
@@ -31,6 +28,7 @@ body {
     overflow-x: hidden;
 }
 
+/* TELAS BASE */
 .tela {
     display: none;
     min-height: 100vh;
@@ -38,8 +36,69 @@ body {
 
 .tela.ativa {
     display: flex;
+    flex-direction: column;
 }
 
+#tela-app.ativa {
+    flex-direction: row;
+}
+
+/* LANDING PAGE */
+.landing-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background: white;
+    box-shadow: var(--shadow-soft);
+}
+
+.nav-links {
+    display: flex;
+    gap: 15px;
+}
+
+.hero-section {
+    text-align: center;
+    padding: 80px 20px;
+    background: white;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.pricing-card {
+    text-align: center;
+    padding: 40px 24px;
+    transition: transform 0.3s;
+    position: relative;
+}
+
+.pricing-card:hover {
+    transform: translateY(-5px);
+}
+
+.price {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 15px 0;
+}
+
+.price span {
+    font-size: 1rem;
+    color: var(--text-light);
+    font-weight: 400;
+}
+
+/* COMPONENTES GERAIS */
 .card-flat {
     background: var(--card-bg);
     border-radius: 12px;
@@ -57,9 +116,10 @@ body {
     font-size: 14px;
     border: none;
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: 0.3s;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
 }
 
@@ -69,7 +129,6 @@ body {
 
 .btn-block {
     width: 100%;
-    justify-content: center;
     padding: 14px;
     font-size: 16px;
 }
@@ -112,6 +171,24 @@ body {
     color: var(--text-light);
 }
 
+.badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge.receita {
+    background: #dcfce7;
+    color: var(--success);
+}
+
+.badge.despesa {
+    background: #fee2e2;
+    color: var(--danger);
+}
+
+/* FORMULÁRIOS */
 .form-group {
     margin-bottom: 16px;
     text-align: left;
@@ -130,7 +207,6 @@ body {
     display: block;
     margin-bottom: 6px;
     font-weight: 600;
-    color: var(--text-dark);
     font-size: 13px;
 }
 
@@ -155,9 +231,7 @@ body {
     border-radius: 8px;
     font-size: 14px;
     outline: none;
-    transition: border-color 0.3s;
     background: #f8fafc;
-    color: var(--text-dark);
 }
 
 .input-wrapper input:focus,
@@ -166,23 +240,7 @@ body {
     background: white;
 }
 
-.input-wrapper input[type="date"],
-.input-wrapper select {
-    padding-left: 14px;
-}
-
-.logo-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    justify-content: flex-start;
-}
-
-.logo-icon {
-    color: var(--primary-orange);
-    font-size: 1.5rem;
-}
-
+/* AUTH TELA */
 #tela-autenticacao {
     align-items: center;
     justify-content: center;
@@ -195,7 +253,6 @@ body {
     max-width: 900px;
     padding: 0;
     overflow: hidden;
-    flex-direction: row;
 }
 
 .auth-info {
@@ -207,33 +264,6 @@ body {
     flex-direction: column;
     justify-content: center;
     border-radius: 12px 0 0 12px;
-}
-
-.auth-info h1 {
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: white;
-}
-
-.auth-info h2 {
-    font-size: 1.2rem;
-    font-weight: 400;
-    margin: 10px 0 20px;
-    opacity: 0.9;
-}
-
-.auth-features {
-    list-style: none;
-    margin-top: 15px;
-}
-
-.auth-features li {
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 500;
-    font-size: 14px;
 }
 
 .auth-forms {
@@ -250,20 +280,18 @@ body {
 
 .secao-form.ativa {
     display: block;
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.3s;
 }
 
-.secao-form h2 {
-    font-size: 1.7rem;
-    margin-bottom: 4px;
-    color: var(--text-title);
-    font-weight: 800;
+.logo-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.secao-form p {
-    color: var(--text-light);
-    margin-bottom: 20px;
-    font-size: 14px;
+.logo-icon {
+    color: var(--primary-orange);
+    font-size: 1.5rem;
 }
 
 .auth-switch {
@@ -278,6 +306,7 @@ body {
     text-decoration: none;
 }
 
+/* APP LAYOUT - SIDEBAR & MAIN */
 .sidebar {
     width: 260px;
     background-color: var(--primary-blue);
@@ -320,9 +349,9 @@ body {
     display: flex;
     align-items: center;
     gap: 14px;
-    transition: background 0.3s;
     font-weight: 500;
     font-size: 14px;
+    transition: background 0.3s;
 }
 
 .nav-item i {
@@ -344,30 +373,11 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-    font-size: 13px;
-}
-
-.avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--primary-orange);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-}
-
 .main-content {
     margin-left: 260px;
     flex: 1;
     padding: 40px;
-    position: relative;
+    width: calc(100% - 260px);
 }
 
 .mobile-header {
@@ -376,7 +386,7 @@ body {
 
 .view {
     display: none;
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.3s;
 }
 
 .view.ativa {
@@ -408,90 +418,10 @@ body {
     font-weight: 800;
 }
 
-.finance-summary {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    padding: 30px 40px;
-}
-
-.summary-item {
-    display: flex;
-    flex-direction: column;
-}
-
-.summary-item.center {
-    text-align: center;
-}
-
-.summary-item.right {
-    text-align: right;
-}
-
-.summary-label {
-    font-size: 0.85rem;
-    color: var(--text-light);
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    letter-spacing: 0.5px;
-}
-
-.summary-item h3 {
-    font-size: 2.2rem;
-    font-weight: 800;
-    margin: 0;
-}
-
-.table-responsive {
-    overflow-x: auto;
-}
-
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.data-table th,
-.data-table td {
-    padding: 16px 24px;
-    text-align: left;
-    border-bottom: 1px solid var(--border-light);
-    font-size: 14px;
-    color: var(--text-dark);
-}
-
-.data-table th {
-    color: var(--text-light);
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 11px;
-    letter-spacing: 0.5px;
-    background: #f8fafc;
-}
-
-.badge {
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.badge.receita {
-    background: #dcfce7;
-    color: var(--success);
-}
-
-.badge.despesa {
-    background: #fee2e2;
-    color: var(--danger);
-}
-
 .dashboard-grid,
 .cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
     margin-bottom: 24px;
 }
@@ -529,102 +459,34 @@ body {
     margin: 0;
 }
 
-.hub-viagens {
-    margin-bottom: 30px;
-    border-left: 4px solid var(--primary-orange);
+.table-responsive {
+    overflow-x: auto;
 }
 
-.hub-header h3 {
-    font-size: 1.1rem;
-    color: var(--text-title);
-    margin-bottom: 16px;
-    font-weight: 700;
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
 }
 
-.hub-form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.hub-categorias {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-top: 15px;
-    border-top: 1px solid var(--border-light);
-}
-
-.hub-grupo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.categoria-label {
-    font-size: 13px;
-    font-weight: 600;
+.data-table th,
+.data-table td {
+    padding: 16px 24px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 14px;
     color: var(--text-dark);
-    min-width: 100px;
 }
 
-.hub-botoes {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.btn-hub {
-    padding: 8px 14px;
-    border: none;
-    border-radius: 6px;
+.data-table th {
+    color: var(--text-light);
     font-weight: 600;
-    font-size: 12px;
-    color: white;
-    cursor: pointer;
-    display: inline-flex;
-    gap: 6px;
-    align-items: center;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    background: #f8fafc;
 }
 
-.btn-airbnb {
-    background: #ff5a5f;
-}
-
-.btn-booking {
-    background: #003580;
-}
-
-.btn-googleflights {
-    background: #1a73e8;
-}
-
-.btn-azul {
-    background: #002561;
-}
-
-.btn-gol {
-    background: #ff6000;
-}
-
-.btn-latam {
-    background: #e8112d;
-}
-
-.btn-decolar {
-    background: #fa2557;
-}
-
-.btn-buser {
-    background: #ff007a;
-}
-
-.btn-clickbus {
-    background: #00b14f;
-}
-
+/* MODAIS E TOAST */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -704,10 +566,10 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    animation: slideIn 0.3s ease-out forwards;
     font-weight: 600;
     font-size: 13px;
     color: var(--text-dark);
+    animation: slideIn 0.3s ease-out forwards;
 }
 
 @keyframes slideIn {
@@ -720,11 +582,7 @@ body {
     }
 }
 
-.toast.oculto {
-    opacity: 0;
-    transition: opacity 0.3s;
-}
-
+/* RESPONSIVIDADE */
 @media (max-width: 860px) {
     .auth-wrapper {
         flex-direction: column;
@@ -748,6 +606,7 @@ body {
         margin-left: 0;
         padding: 15px;
         padding-top: 80px;
+        width: 100%;
     }
 
     .mobile-header {
@@ -764,33 +623,10 @@ body {
         box-shadow: var(--shadow-soft);
     }
 
-    .mobile-header h2 {
-        color: var(--primary-blue);
-        font-size: 1.2rem;
-        font-weight: 800;
-        margin: 0;
-    }
-
     .view-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
-    }
-
-    .finance-summary {
-        flex-direction: column;
-        gap: 20px;
-        text-align: center;
-    }
-
-    .summary-item {
-        border-left: none !important;
-        padding-left: 0 !important;
-    }
-
-    .summary-item.center,
-    .summary-item.right {
-        text-align: center;
     }
 
     .form-row {
