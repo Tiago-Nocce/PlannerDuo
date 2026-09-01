@@ -4,413 +4,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlannerDuo - Gestão a Dois</title>
+    <title>PlannerDuo - Tiago & Yasmin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
-<body>
-    <div id="toast-container"></div>
-
-    <div id="tela-landing" class="tela ativa">
-        <nav class="landing-nav">
-            <div class="logo-header">
-                <i class="fa-solid fa-heart logo-icon"></i>
-                <h2>PlannerDuo</h2>
-            </div>
-            <div class="nav-links">
-                <button onclick="Auth.iniciarApp('login')" class="btn-outline">Entrar</button>
-                <button onclick="Auth.iniciarApp('cadastro')" class="btn-primary">Começar Grátis</button>
-            </div>
-        </nav>
-        <header class="hero-section">
-            <h1 style="font-size: 2.8rem; color: var(--primary-blue); margin-bottom: 15px;">Planejamento para casais
-                inteligentes</h1>
-            <p style="font-size: 1.2rem; margin-bottom: 30px;">Divida despesas, alcance metas e organize roteiros sem
-                brigas. Sincronização em nuvem.</p>
-            <button onclick="Auth.iniciarApp('cadastro')" class="btn-primary btn-block"
-                style="max-width: 300px; margin: 0 auto;">Criar Conta do Casal</button>
-        </header>
-        <section id="pricing" class="pricing-section" style="max-width: 1000px; margin: 40px auto; padding: 20px;">
-            <h2 style="text-align: center; margin-bottom: 30px;">Planos feitos para o seu momento</h2>
-            <div class="pricing-grid">
-                <div class="card-flat pricing-card">
-                    <h3>Básico</h3>
-                    <h4 class="price">Grátis</h4>
-                    <ul style="list-style: none; text-align: left; margin: 20px 0; line-height: 2;">
-                        <li><i class="fa-solid fa-check text-success"></i> Gestão de despesas básicas</li>
-                        <li><i class="fa-solid fa-check text-success"></i> Hub central de viagens</li>
-                    </ul>
-                    <button onclick="Auth.iniciarApp('cadastro')" class="btn-outline btn-block">Escolher Básico</button>
-                </div>
-                <div class="card-flat pricing-card" style="border: 2px solid var(--primary-orange);">
-                    <span class="badge receita" style="position: absolute; top: -10px; right: 20px;">Mais
-                        Escolhido</span>
-                    <h3>Premium</h3>
-                    <h4 class="price">R$ 14,90<span>/mês</span></h4>
-                    <ul style="list-style: none; text-align: left; margin: 20px 0; line-height: 2;">
-                        <li><i class="fa-solid fa-check text-success"></i> Relatórios Inteligentes e Gráficos</li>
-                        <li><i class="fa-solid fa-check text-success"></i> Exportação de Dados (CSV)</li>
-                    </ul>
-                    <button onclick="Auth.iniciarApp('cadastro')" class="btn-primary btn-block">Assinar Premium</button>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <div id="tela-autenticacao" class="tela">
-        <div class="auth-wrapper card-flat">
-            <div class="auth-info">
-                <div class="logo-header">
-                    <i class="fa-solid fa-heart logo-icon"></i>
-                    <h1>PlannerDuo</h1>
-                </div>
-                <h2>Acesse o ambiente do casal</h2>
-            </div>
-            <div class="auth-forms">
-                <div id="secao-login" class="secao-form ativa">
-                    <h2>Bem-vindo de volta!</h2>
-                    <form id="form-login">
-                        <div class="form-group">
-                            <label>E-mail do Casal</label>
-                            <div class="input-wrapper"><i class="fa-regular fa-envelope"></i><input type="email"
-                                    id="login-email" required></div>
-                        </div>
-                        <div class="form-group">
-                            <label>Senha</label>
-                            <div class="input-wrapper"><i class="fa-solid fa-lock"></i><input type="password"
-                                    id="login-senha" required></div>
-                        </div>
-                        <button type="submit" class="btn-primary btn-block">Entrar</button>
-                    </form>
-                    <p class="auth-switch">Sem conta? <a href="#"
-                            onclick="Auth.alternarTela('cadastro')">Cadastre-se</a></p>
-                </div>
-                <div id="secao-cadastro" class="secao-form">
-                    <h2>Criar Conta</h2>
-                    <form id="form-cadastro">
-                        <div class="form-group">
-                            <label>Nome do Casal</label>
-                            <div class="input-wrapper"><i class="fa-regular fa-user"></i><input type="text"
-                                    id="cadastro-nome" required></div>
-                        </div>
-                        <div class="form-group">
-                            <label>E-mail</label>
-                            <div class="input-wrapper"><i class="fa-regular fa-envelope"></i><input type="email"
-                                    id="cadastro-email" required></div>
-                        </div>
-                        <div class="form-group">
-                            <label>Senha</label>
-                            <div class="input-wrapper"><i class="fa-solid fa-lock"></i><input type="password"
-                                    id="cadastro-senha" required></div>
-                        </div>
-                        <button type="submit" class="btn-primary btn-block">Finalizar Cadastro</button>
-                    </form>
-                    <p class="auth-switch">Já possuem conta? <a href="#" onclick="Auth.alternarTela('login')">Fazer
-                            Login</a></p>
-                </div>
+<body class="landing-body">
+    <nav class="landing-nav">
+        <div class="logo-header">
+            <i class="fa-solid fa-heart logo-icon"></i>
+            <h2>PlannerDuo</h2>
+        </div>
+        <div class="nav-links">
+            <a href="auth.html" class="btn-outline" style="text-decoration: none;">Entrar</a>
+            <a href="auth.html" class="btn-primary" style="text-decoration: none;">Acessar Sistema</a>
+        </div>
+    </nav>
+    <header class="hero-section">
+        <div class="hero-content">
+            <div class="badge-destaque">Ambiente 100% Privado</div>
+            <h1 class="hero-title">O ecossistema do nosso planejamento.</h1>
+            <p class="hero-subtitle">Gestão financeira transparente, acerto de contas automatizado e nossa central de
+                viagens sincronizada em tempo real na nuvem.</p>
+            <div class="hero-buttons">
+                <a href="auth.html" class="btn-primary btn-large" style="text-decoration: none;"><i
+                        class="fa-solid fa-right-to-bracket"></i> Iniciar Sessão Segura</a>
             </div>
         </div>
-    </div>
-
-    <div id="tela-app" class="tela">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <i class="fa-solid fa-heart logo-icon"></i>
-                <h2>PlannerDuo</h2>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item ativo" data-alvo="dashboard"><i class="fa-solid fa-chart-pie"></i> Visão
-                    Geral</a>
-                <a href="#" class="nav-item" data-alvo="viagens"><i class="fa-solid fa-plane"></i> Central de
-                    Viagens</a>
-                <a href="#" class="nav-item" data-alvo="financas"><i class="fa-solid fa-coins"></i> Finanças</a>
-                <a href="#" class="nav-item" data-alvo="metas"><i class="fa-solid fa-bullseye"></i> Metas do Casal</a>
-            </nav>
-            <div class="sidebar-footer">
-                <span id="saudacao-usuario">Olá</span>
-                <button onclick="Auth.logout()" class="btn-icon"><i class="fa-solid fa-right-from-bracket"></i></button>
-            </div>
-        </aside>
-
-        <main class="main-content">
-            <header class="mobile-header">
-                <div class="logo-header">
-                    <i class="fa-solid fa-heart logo-icon"></i>
-                    <h2>PlannerDuo</h2>
-                </div>
-                <button id="btn-menu-mobile" class="btn-icon"><i class="fa-solid fa-bars"></i></button>
-            </header>
-
-            <section id="dashboard" class="view ativa">
-                <h2 class="view-title">Visão Geral</h2>
-                <div class="dashboard-grid">
-                    <div class="stat-card card-flat">
-                        <div class="stat-icon"><i class="fa-solid fa-plane-departure"></i></div>
-                        <div class="stat-info">
-                            <h3>Próxima Viagem</h3>
-                            <p id="stat-next-trip">Nenhuma</p>
-                        </div>
-                    </div>
-                    <div class="stat-card card-flat">
-                        <div class="stat-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
-                        <div class="stat-info">
-                            <h3>Despesas do Mês</h3>
-                            <p id="stat-expenses" class="text-danger">R$ 0,00</p>
-                        </div>
-                    </div>
-                    <div class="stat-card card-flat">
-                        <div class="stat-icon"><i class="fa-solid fa-handshake"></i></div>
-                        <div class="stat-info">
-                            <h3>Acerto de Contas</h3>
-                            <p id="stat-acerto" class="text-success">Tudo quite!</p>
-                        </div>
-                    </div>
-                    <div class="card-flat" style="grid-column: 1 / -1; height: 320px; padding: 20px;">
-                        <h3 style="margin-bottom: 15px; color: var(--text-title);"><i class="fa-solid fa-chart-pie"></i>
-                            Distribuição de Despesas</h3>
-                        <div style="position: relative; height: 85%; width: 100%;">
-                            <canvas id="graficoDespesas"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="viagens" class="view">
-                <div class="view-header">
-                    <h2 class="view-title">Central de Viagens</h2>
-                    <button class="btn-primary" onclick="UI.abrirModal('modal-viagem')"><i class="fa-solid fa-plus"></i>
-                        Salvar Roteiro</button>
-                </div>
-                <div class="hub-viagens card-flat"
-                    style="margin-bottom: 30px; border-left: 4px solid var(--primary-orange);">
-                    <h3 style="margin-bottom: 16px; font-weight: 700; color: var(--text-title);"><i
-                            class="fa-solid fa-magnifying-glass-location"></i> Busca Inteligente</h3>
-                    <div
-                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                        <div class="form-group"><label>Origem</label>
-                            <div class="input-wrapper"><input type="text" id="busca-origem" value="Belo Horizonte">
-                            </div>
-                        </div>
-                        <div class="form-group"><label>Destino</label>
-                            <div class="input-wrapper"><input type="text" id="busca-destino"
-                                    placeholder="Ex: Rio de Janeiro"></div>
-                        </div>
-                        <div class="form-group"><label>Ida</label>
-                            <div class="input-wrapper"><input type="date" id="busca-data-ida"></div>
-                        </div>
-                        <div class="form-group"><label>Volta</label>
-                            <div class="input-wrapper"><input type="date" id="busca-data-volta"></div>
-                        </div>
-                        <div class="form-group">
-                            <label>Viajantes</label>
-                            <div class="input-wrapper">
-                                <select id="busca-passageiros">
-                                    <option value="2" selected>2 Pessoas (Casal)</option>
-                                    <option value="1">1 Pessoa</option>
-                                    <option value="4">Família (4+)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div
-                        style="display: flex; flex-direction: column; gap: 12px; padding-top: 15px; border-top: 1px solid var(--border-light);">
-                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                            <span style="font-size: 13px; font-weight: 600; min-width: 90px;"><i
-                                    class="fa-solid fa-bed"></i> Hotéis:</span>
-                            <button onclick="ServicoBusca.redirecionar('airbnb')" class="btn-hub btn-airbnb"><i
-                                    class="fa-brands fa-airbnb"></i> Airbnb</button>
-                            <button onclick="ServicoBusca.redirecionar('booking')" class="btn-hub btn-booking"><i
-                                    class="fa-solid fa-hotel"></i> Booking</button>
-                        </div>
-                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                            <span style="font-size: 13px; font-weight: 600; min-width: 90px;"><i
-                                    class="fa-solid fa-plane"></i> Voos:</span>
-                            <button onclick="ServicoBusca.redirecionar('googleflights')"
-                                class="btn-hub btn-googleflights"><i class="fa-brands fa-google"></i> Google
-                                Voos</button>
-                            <button onclick="ServicoBusca.redirecionar('azul')" class="btn-hub btn-azul">Azul</button>
-                            <button onclick="ServicoBusca.redirecionar('gol')" class="btn-hub btn-gol">Gol</button>
-                            <button onclick="ServicoBusca.redirecionar('latam')"
-                                class="btn-hub btn-latam">LATAM</button>
-                        </div>
-                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                            <span style="font-size: 13px; font-weight: 600; min-width: 90px;"><i
-                                    class="fa-solid fa-bus"></i> Ônibus:</span>
-                            <button onclick="ServicoBusca.redirecionar('buser')" class="btn-hub btn-buser"><i
-                                    class="fa-solid fa-bus-simple"></i> Buser</button>
-                            <button onclick="ServicoBusca.redirecionar('clickbus')" class="btn-hub btn-clickbus"><i
-                                    class="fa-solid fa-bus"></i> ClickBus</button>
-                        </div>
-                    </div>
-                </div>
-                <div id="lista-viagens" class="cards-grid"></div>
-            </section>
-
-            <section id="financas" class="view">
-                <div class="view-header">
-                    <h2 class="view-title">Finanças Compartilhadas</h2>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn-outline" onclick="Exportacao.gerarCSV()"><i class="fa-solid fa-file-csv"></i>
-                            Exportar</button>
-                        <button class="btn-primary" onclick="UI.abrirModal('modal-financa')"><i
-                                class="fa-solid fa-plus"></i> Nova</button>
-                    </div>
-                </div>
-                <div class="card-flat" style="padding: 0; overflow: hidden;">
-                    <div class="table-responsive">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Data</th>
-                                    <th>Descrição</th>
-                                    <th>Quem Pagou</th>
-                                    <th>Valor</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="lista-financas"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <section id="metas" class="view">
-                <div class="view-header">
-                    <h2 class="view-title">Metas do Casal</h2>
-                    <button class="btn-primary" onclick="UI.abrirModal('modal-meta')"><i class="fa-solid fa-plus"></i>
-                        Nova Meta</button>
-                </div>
-                <div id="lista-metas" class="cards-grid"></div>
-            </section>
-        </main>
-    </div>
-
-    <!-- MODAIS -->
-    <div id="modal-viagem" class="modal-overlay">
-        <div class="modal card-flat">
-            <div class="modal-header">
-                <h3>Salvar Viagem</h3>
-                <button type="button" class="btn-close" onclick="UI.fecharModal('modal-viagem')"><i
-                        class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form id="form-viagem">
-                <div class="form-group">
-                    <label>Destino</label>
-                    <div class="input-wrapper"><i class="fa-solid fa-map-pin"></i><input type="text" id="viagem-destino"
-                            required></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Ida</label>
-                        <div class="input-wrapper"><input type="date" id="viagem-ida" required></div>
-                    </div>
-                    <div class="form-group">
-                        <label>Volta</label>
-                        <div class="input-wrapper"><input type="date" id="viagem-volta" required></div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Link da Reserva (Opcional)</label>
-                    <div class="input-wrapper"><i class="fa-solid fa-link"></i><input type="url" id="viagem-link"
-                            placeholder="https://..."></div>
-                </div>
-                <div class="form-group">
-                    <label>Orçamento Estimado (R$)</label>
-                    <div class="input-wrapper"><i class="fa-solid fa-dollar-sign"></i><input type="number"
-                            id="viagem-orcamento" step="0.01" required></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-outline" onclick="UI.fecharModal('modal-viagem')">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar Roteiro</button>
-                </div>
-            </form>
+    </header>
+    <section class="features-section">
+        <div class="feature-card card-flat">
+            <div class="feature-icon"><i class="fa-solid fa-server"></i></div>
+            <h3>Infraestrutura Dedicada</h3>
+            <p class="text-muted">Autenticação Firebase operando em tempo real. Acesso validado e independente, seja na
+                rede da TechBiz ou em casa.</p>
         </div>
-    </div>
-
-    <div id="modal-financa" class="modal-overlay">
-        <div class="modal card-flat">
-            <div class="modal-header">
-                <h3>Registrar Transação</h3>
-                <button type="button" class="btn-close" onclick="UI.fecharModal('modal-financa')"><i
-                        class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form id="form-financa">
-                <div class="form-group">
-                    <label>Descrição</label>
-                    <div class="input-wrapper"><i class="fa-solid fa-tag"></i><input type="text" id="financa-desc"
-                            required></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Tipo</label>
-                        <div class="input-wrapper">
-                            <select id="financa-tipo" required>
-                                <option value="despesa">Despesa (Saída)</option>
-                                <option value="receita">Receita (Entrada)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Valor (R$)</label>
-                        <div class="input-wrapper"><i class="fa-solid fa-dollar-sign"></i><input type="number"
-                                id="financa-valor" step="0.01" required></div>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Quem Pagou?</label>
-                        <div class="input-wrapper">
-                            <select id="financa-resp" required>
-                                <option value="Tiago">Tiago</option>
-                                <option value="Yasmin">Yasmin</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Data</label>
-                        <div class="input-wrapper"><input type="date" id="financa-data" required></div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-outline"
-                        onclick="UI.fecharModal('modal-financa')">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar</button>
-                </div>
-            </form>
+        <div class="feature-card card-flat">
+            <div class="feature-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+            <h3>Finanças Inteligentes</h3>
+            <p class="text-muted">Esqueça as planilhas manuais. O sistema calcula automaticamente quem deve quem com
+                base nos nossos registros diários.</p>
         </div>
-    </div>
-
-    <div id="modal-meta" class="modal-overlay">
-        <div class="modal card-flat">
-            <div class="modal-header">
-                <h3>Nova Meta</h3>
-                <button type="button" class="btn-close" onclick="UI.fecharModal('modal-meta')"><i
-                        class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form id="form-meta">
-                <div class="form-group">
-                    <label>Título da Meta</label>
-                    <div class="input-wrapper"><i class="fa-solid fa-bullseye"></i><input type="text" id="meta-titulo"
-                            required></div>
-                </div>
-                <div class="form-group">
-                    <label>Prazo Limite</label>
-                    <div class="input-wrapper"><input type="date" id="meta-prazo" required></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-outline" onclick="UI.fecharModal('modal-meta')">Cancelar</button>
-                    <button type="submit" class="btn-primary">Criar Meta</button>
-                </div>
-            </form>
+        <div class="feature-card card-flat">
+            <div class="feature-icon"><i class="fa-solid fa-plane-up"></i></div>
+            <h3>Hub de Viagens</h3>
+            <p class="text-muted">Nossos roteiros, links de reserva e orçamentos centralizados com gerador dinâmico de
+                buscas paramétricas (Airbnb, Voos, ClickBus).</p>
         </div>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="app.js"></script>
+    </section>
 </body>
 
 </html>
