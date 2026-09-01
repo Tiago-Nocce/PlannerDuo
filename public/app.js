@@ -17,8 +17,6 @@ if (!firebase.apps.length) {
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// A lógica de Estado, Utils e Controladores continua abaixo...
-
 // ==========================================
 // ESTADO GLOBAL & UTILITÁRIOS
 // ==========================================
@@ -59,20 +57,16 @@ const UI = {
                 item.classList.add('ativo');
                 const alvoId = item.getAttribute('data-alvo');
                 document.getElementById(alvoId).classList.add('ativa');
-                document.querySelector('.sidebar').classList.remove('aberto');
 
                 if (alvoId === 'dashboard') Analytics.atualizarGrafico();
                 if (alvoId === 'viagens') Render.viagens();
             });
         });
-        document.getElementById('btn-menu-mobile')?.addEventListener('click', () => {
-            document.querySelector('.sidebar').classList.toggle('aberto');
-        });
     }
 };
 
 // ==========================================
-// FIREBASE AUTHENTICATION (PROTEÇÃO DE ROTA)
+// FIREBASE AUTHENTICATION
 // ==========================================
 const Auth = {
     iniciarObserver: () => {
@@ -104,7 +98,6 @@ const Auth = {
         e.preventDefault();
         const email = document.getElementById('login-email').value;
         const senha = document.getElementById('login-senha').value;
-
         auth.signInWithEmailAndPassword(email, senha)
             .then(() => UI.mostrarToast("Login realizado com sucesso!"))
             .catch((error) => UI.mostrarToast("Erro no login. E-mail ou senha incorretos.", "erro"));
@@ -113,7 +106,6 @@ const Auth = {
         e.preventDefault();
         const email = document.getElementById('cadastro-email').value;
         const senha = document.getElementById('cadastro-senha').value;
-
         auth.createUserWithEmailAndPassword(email, senha)
             .then(() => UI.mostrarToast("Conta segura criada com sucesso!"))
             .catch((error) => UI.mostrarToast(error.message, "erro"));
@@ -242,11 +234,11 @@ const Analytics = {
                 labels: ['Pagos por Tiago', 'Pagos por Yasmin'],
                 datasets: [{
                     data: [tiagoTotal, yasminTotal],
-                    backgroundColor: ['#2B3A70', '#E87A3E'],
+                    backgroundColor: ['rgba(43, 58, 112, 0.85)', 'rgba(232, 122, 62, 0.85)'],
                     borderWidth: 0
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { responsive: true, maintainAspectRatio: false, cutout: '75%' }
         });
     }
 };
@@ -298,7 +290,6 @@ const Render = {
 
         const campoFiltro = document.getElementById('filtro-roteiros');
         const termoBusca = campoFiltro ? campoFiltro.value.toLowerCase() : '';
-
         const viagensFiltradas = Estado.viagens.filter(v => v.destino.toLowerCase().includes(termoBusca));
 
         lista.innerHTML = viagensFiltradas.length ? '' : '<p class="text-muted" style="grid-column: 1 / -1;">Nenhum roteiro salvo encontrado.</p>';
@@ -306,14 +297,14 @@ const Render = {
         viagensFiltradas.sort((a, b) => new Date(a.ida) - new Date(b.ida)).forEach(v => {
             lista.innerHTML += `
                 <div class="card-flat">
-                    <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
-                        <h3 style="color: var(--text-title); font-weight: 800; text-transform: capitalize;">${v.destino}</h3>
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 12px;">
+                        <h3 style="color: var(--text-title); font-weight: 800; font-size: 1.3rem; text-transform: capitalize;">${v.destino}</h3>
                         <button class="btn-icon text-danger" onclick="Controladores.deletar('viagem', '${v.id}')"><i class="fa-solid fa-trash"></i></button>
                     </div>
-                    <p class="text-muted" style="font-size: 0.9rem;"><i class="fa-regular fa-calendar"></i> ${Utils.formatarData(v.ida)} a ${Utils.formatarData(v.volta)}</p>
-                    ${v.link ? `<a href="${v.link}" target="_blank" style="color: var(--primary-blue); font-size: 0.85rem; font-weight: 700; text-decoration: none; display: inline-block; margin-top: 5px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Acessar Reserva</a>` : ''}
-                    <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-light);">
-                        <span class="badge receita">Orçamento: ${Utils.formatarMoeda(v.orcamento)}</span>
+                    <p class="text-muted" style="font-size: 0.95rem; font-weight: 500; margin-bottom: 6px;"><i class="fa-regular fa-calendar" style="margin-right: 6px;"></i> ${Utils.formatarData(v.ida)} a ${Utils.formatarData(v.volta)}</p>
+                    ${v.link ? `<a href="${v.link}" target="_blank" style="color: var(--primary-orange); font-size: 0.9rem; font-weight: 700; text-decoration: none; display: inline-block; margin-top: 8px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Acessar Reserva</a>` : ''}
+                    <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.05);">
+                        <span class="badge receita" style="font-size: 13px;">Orçamento: ${Utils.formatarMoeda(v.orcamento)}</span>
                     </div>
                 </div>`;
         });
@@ -321,13 +312,13 @@ const Render = {
     financas: () => {
         const lista = document.getElementById('lista-financas');
         if (!lista) return;
-        lista.innerHTML = Estado.financas.length ? '' : '<tr><td colspan="5" style="text-align: center;" class="text-muted">Nenhuma movimentação.</td></tr>';
+        lista.innerHTML = Estado.financas.length ? '' : '<tr><td colspan="5" style="text-align: center;" class="text-muted">Nenhuma movimentação registrada.</td></tr>';
         [...Estado.financas].sort((a, b) => new Date(b.data) - new Date(a.data)).forEach(f => {
             lista.innerHTML += `
                 <tr>
-                    <td>${Utils.formatarData(f.data)}</td>
-                    <td style="font-weight: 600;">${f.desc}</td>
-                    <td>${f.resp}</td>
+                    <td style="font-weight: 500;">${Utils.formatarData(f.data)}</td>
+                    <td style="font-weight: 700; color: var(--text-title);">${f.desc}</td>
+                    <td style="font-weight: 600;">${f.resp}</td>
                     <td><span class="badge ${f.tipo}">${f.tipo === 'receita' ? '+' : '-'} ${Utils.formatarMoeda(f.valor)}</span></td>
                     <td><button class="btn-icon text-danger" onclick="Controladores.deletar('financa', '${f.id}')"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>`;
@@ -336,17 +327,17 @@ const Render = {
     metas: () => {
         const lista = document.getElementById('lista-metas');
         if (!lista) return;
-        lista.innerHTML = Estado.metas.length ? '' : '<p class="text-muted">Nenhuma meta ativa no momento.</p>';
+        lista.innerHTML = Estado.metas.length ? '' : '<p class="text-muted" style="grid-column: 1 / -1;">Nenhuma meta ativa no momento.</p>';
         Estado.metas.sort((a, b) => new Date(a.prazo) - new Date(b.prazo)).forEach(m => {
             const atrasado = new Date(m.prazo + 'T00:00:00') < new Date(new Date().setHours(0, 0, 0, 0));
             lista.innerHTML += `
-                <div class="card-flat">
-                    <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
-                        <h3 style="font-weight: 800;">${m.titulo}</h3>
+                <div class="card-flat" style="display: flex; flex-direction: column; justify-content: center;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 12px;">
+                        <h3 style="font-weight: 800; font-size: 1.25rem; color: var(--text-title);">${m.titulo}</h3>
                         <button class="btn-icon text-danger" onclick="Controladores.deletar('meta', '${m.id}')"><i class="fa-solid fa-trash"></i></button>
                     </div>
-                    <p style="color: ${atrasado ? 'var(--danger)' : 'var(--success)'}; font-weight: 700; font-size: 0.9rem;">
-                        <i class="fa-regular fa-clock"></i> Prazo: ${Utils.formatarData(m.prazo)} ${atrasado ? '(Atrasado)' : ''}
+                    <p style="color: ${atrasado ? 'var(--danger)' : 'var(--success)'}; font-weight: 700; font-size: 0.95rem;">
+                        <i class="fa-regular fa-clock" style="margin-right: 6px;"></i> Prazo: ${Utils.formatarData(m.prazo)} ${atrasado ? '(Atrasado)' : ''}
                     </p>
                 </div>`;
         });
@@ -354,24 +345,18 @@ const Render = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Escuta estado de login em todas as páginas para redirecionamento imediato
     Auth.iniciarObserver();
-
-    // Eventos da página de Auth
     const formLogin = document.getElementById('form-login');
     if (formLogin) formLogin.addEventListener('submit', Auth.login);
     const formCadastro = document.getElementById('form-cadastro');
     if (formCadastro) formCadastro.addEventListener('submit', Auth.cadastro);
 
-    // Eventos da página do App Principal
     if (window.location.pathname.includes('app.html')) {
         document.getElementById('form-viagem')?.addEventListener('submit', Controladores.adicionarViagem);
         document.getElementById('form-financa')?.addEventListener('submit', Controladores.adicionarFinanca);
         document.getElementById('form-meta')?.addEventListener('submit', Controladores.adicionarMeta);
-
         const filtroInput = document.getElementById('filtro-roteiros');
         if (filtroInput) filtroInput.addEventListener('input', Render.viagens);
-
         UI.setupNav();
     }
 });
