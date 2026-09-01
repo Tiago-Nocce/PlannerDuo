@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso - PlannerDuo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;">
+    <div id="toast-container"></div>
+
+    <div class="auth-wrapper">
+        <div class="auth-info">
+            <div class="logo-header" style="margin-bottom: 24px;">
+                <i class="fa-solid fa-heart logo-icon"></i>
+                <h1 style="color: white; margin: 0; font-size: 2rem; letter-spacing: -1px;">PlannerDuo</h1>
+            </div>
+            <h2
+                style="color: rgba(255,255,255,0.95); font-weight: 800; font-size: 2.4rem; line-height: 1.2; margin-bottom: 16px;">
+                O espaço seguro <br>da nossa rotina.</h2>
+            <p style="color: rgba(255,255,255,0.7); font-size: 1.1rem;">Acesso criptografado e sincronizado em tempo
+                real na nuvem.</p>
+        </div>
+
+        <div class="auth-forms">
+            <div id="secao-login" class="secao-form ativa">
+                <h2
+                    style="font-size: 2rem; color: var(--text-title); font-weight: 800; margin-bottom: 32px; letter-spacing: -0.5px;">
+                    Bem-vindo de volta!</h2>
+                <form id="form-login">
+                    <div class="form-group">
+                        <label>E-mail da Conta</label>
+                        <div class="input-wrapper"><i class="fa-regular fa-envelope"></i><input type="email"
+                                id="login-email" required></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Senha</label>
+                        <div class="input-wrapper"><i class="fa-solid fa-lock"></i><input type="password"
+                                id="login-senha" required></div>
+                    </div>
+                    <button type="submit" class="btn-primary btn-block" style="margin-top: 16px;">Entrar no
+                        Sistema</button>
+                </form>
+
+                <div style="display: flex; align-items: center; margin: 24px 0;">
+                    <hr style="flex: 1; border: none; border-top: 1px solid var(--border-light);">
+                    <span
+                        style="padding: 0 12px; color: var(--text-light); font-size: 12px; font-weight: 600;">OU</span>
+                    <hr style="flex: 1; border: none; border-top: 1px solid var(--border-light);">
+                </div>
+                <button type="button" class="btn-outline btn-block" onclick="Auth.loginGoogle()"
+                    style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <i class="fa-brands fa-google" style="color: #ea4335; font-size: 16px;"></i> Continuar com o Google
+                </button>
+
+                <p class="auth-switch">Primeiro acesso? <a href="#" onclick="AlternarAuth('cadastro')">Criar conta</a>
+                </p>
+            </div>
+
+            <div id="secao-cadastro" class="secao-form">
+                <h2
+                    style="font-size: 2rem; color: var(--text-title); font-weight: 800; margin-bottom: 32px; letter-spacing: -0.5px;">
+                    Criar Conta Segura</h2>
+                <form id="form-cadastro">
+                    <div class="form-group">
+                        <label>E-mail Compartilhado</label>
+                        <div class="input-wrapper"><i class="fa-regular fa-envelope"></i><input type="email"
+                                id="cadastro-email" required></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Senha Segura</label>
+                        <div class="input-wrapper"><i class="fa-solid fa-lock"></i><input type="password"
+                                id="cadastro-senha" placeholder="Mín. 6 caracteres" required></div>
+                    </div>
+                    <button type="submit" class="btn-primary btn-block" style="margin-top: 16px;">Registrar
+                        Casal</button>
+                </form>
+
+                <div style="display: flex; align-items: center; margin: 24px 0;">
+                    <hr style="flex: 1; border: none; border-top: 1px solid var(--border-light);">
+                    <span
+                        style="padding: 0 12px; color: var(--text-light); font-size: 12px; font-weight: 600;">OU</span>
+                    <hr style="flex: 1; border: none; border-top: 1px solid var(--border-light);">
+                </div>
+                <button type="button" class="btn-outline btn-block" onclick="Auth.loginGoogle()"
+                    style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <i class="fa-brands fa-google" style="color: #ea4335; font-size: 16px;"></i> Cadastrar com o Google
+                </button>
+
+                <p class="auth-switch">Já registraram? <a href="#" onclick="AlternarAuth('login')">Fazer Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="app.js"></script>
+    <script>
+        function AlternarAuth(tipo) {
+            document.querySelectorAll('.secao-form').forEach(s => s.classList.remove('ativa'));
+            document.getElementById(`secao-${tipo}`).classList.add('ativa');
+        }
+    </script>
+</body>
+
+</html>

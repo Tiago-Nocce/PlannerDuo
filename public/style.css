@@ -1,0 +1,791 @@
+:root {
+    /* Cores Principais - Elegância e Vida */
+    --primary-blue: #0A1128;
+    --active-blue: #162447;
+    --primary-orange: #FF6A00;
+    --orange-hover: #E65C00;
+    --bg-main: #F4F7FB;
+    --card-bg: #FFFFFF;
+
+    /* Textos e Bordas */
+    --text-dark: #1E293B;
+    --text-title: #0A1128;
+    --text-light: #64748B;
+    --border-light: #E2E8F0;
+
+    /* Gradients e Sombras Robustas */
+    --gradient-orange: linear-gradient(135deg, #FF8220 0%, #F15A24 100%);
+    --gradient-blue: linear-gradient(135deg, #0A1128 0%, #1A2B56 100%);
+    --shadow-soft: 0 12px 24px -6px rgba(10, 17, 40, 0.06);
+    --shadow-hover: 0 20px 32px -8px rgba(10, 17, 40, 0.12);
+
+    /* Utilitários */
+    --success: #10B981;
+    --danger: #EF4444;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Detalhe vivo no fundo (Header Glow) */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 40vh;
+    background: linear-gradient(180deg, rgba(10, 17, 40, 0.03) 0%, rgba(244, 247, 251, 0) 100%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+.tela {
+    display: none;
+    min-height: 100vh;
+}
+
+.tela.ativa {
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.4s ease-out;
+}
+
+#tela-app.ativa {
+    flex-direction: row;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================
+   COMPONENTES ROBUSTOS E CARTÕES
+========================================== */
+.card-flat {
+    background: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: var(--shadow-soft);
+    padding: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.card-flat:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* ==========================================
+   BOTÕES VIBRANTES
+========================================== */
+.btn-primary {
+    background: var(--gradient-orange);
+    color: white;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 15px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 8px 16px rgba(241, 90, 36, 0.25);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 20px rgba(241, 90, 36, 0.35);
+    filter: brightness(1.05);
+}
+
+.btn-primary:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 4px 8px rgba(241, 90, 36, 0.2);
+}
+
+.btn-block {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+}
+
+.btn-outline {
+    background: #FFFFFF;
+    border: 2px solid var(--border-light);
+    color: var(--text-dark);
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+.btn-outline:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    background: #F8FAFC;
+    transform: translateY(-2px);
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.btn-icon:hover {
+    color: var(--primary-orange);
+}
+
+.badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.badge.receita {
+    background: #dcfce7;
+    color: #059669;
+}
+
+.badge.despesa {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* ==========================================
+   INPUTS E FORMULÁRIOS ELEGANTES
+========================================== */
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--text-title);
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.input-wrapper i {
+    position: absolute;
+    left: 16px;
+    color: var(--text-light);
+    font-size: 1.1rem;
+    z-index: 2;
+}
+
+.input-wrapper input,
+.input-wrapper select {
+    width: 100%;
+    padding: 16px 16px 16px 48px;
+    border: 2px solid transparent;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 500;
+    outline: none;
+    background: #Eef2f6;
+    color: var(--text-dark);
+    transition: all 0.3s ease;
+}
+
+.input-wrapper input:focus,
+.input-wrapper select:focus {
+    background: #FFFFFF;
+    border-color: var(--primary-blue);
+    box-shadow: 0 8px 16px rgba(10, 17, 40, 0.08);
+}
+
+.input-wrapper input::placeholder {
+    color: #94A3B8;
+    font-weight: 400;
+}
+
+/* ==========================================
+   SIDEBAR E MAIN CONTENT
+========================================== */
+.sidebar {
+    width: 280px;
+    background: var(--gradient-blue);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 96vh;
+    left: 2vh;
+    top: 2vh;
+    z-index: 100;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(10, 17, 40, 0.2);
+}
+
+.sidebar-header {
+    padding: 32px 24px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sidebar-header h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: white;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.logo-icon {
+    color: var(--primary-orange);
+    font-size: 1.8rem;
+    filter: drop-shadow(0 4px 6px rgba(255, 106, 0, 0.3));
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.nav-item {
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-weight: 600;
+    font-size: 14.5px;
+    border-radius: 14px;
+    transition: all 0.3s ease;
+}
+
+.nav-item i {
+    width: 22px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.nav-item:hover,
+.nav-item.ativo {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.05);
+}
+
+.nav-item.ativo {
+    background: var(--primary-orange);
+    box-shadow: 0 4px 12px rgba(255, 106, 0, 0.3);
+}
+
+.sidebar-footer {
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 0 0 24px 24px;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.main-content {
+    margin-left: 310px;
+    flex: 1;
+    padding: 40px 50px;
+    width: calc(100% - 310px);
+}
+
+.view {
+    display: none;
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.view.ativa {
+    display: block;
+}
+
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.view-title {
+    font-size: 2.2rem;
+    color: var(--text-title);
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+/* ==========================================
+   CARDS DE ESTATÍSTICA (DASHBOARD)
+========================================== */
+.dashboard-grid,
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 32px;
+}
+
+.stat-icon {
+    width: 68px;
+    height: 68px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(10, 17, 40, 0.05), rgba(10, 17, 40, 0.01));
+    color: var(--primary-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    box-shadow: inset 0 0 0 1px rgba(10, 17, 40, 0.05);
+}
+
+.stat-info h3 {
+    font-size: 0.95rem;
+    color: var(--text-light);
+    margin-bottom: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-info p {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-title);
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+/* ==========================================
+   TABELAS ELEGANTES
+========================================== */
+.table-responsive {
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+}
+
+.data-table th {
+    padding: 0 24px 10px;
+    color: var(--text-light);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 11.5px;
+    letter-spacing: 1px;
+}
+
+.data-table td {
+    padding: 24px;
+    background: #FFFFFF;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-dark);
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+    transition: all 0.2s;
+}
+
+.data-table tr td:first-child {
+    border-radius: 16px 0 0 16px;
+    border-left: 1px solid var(--border-light);
+}
+
+.data-table tr td:last-child {
+    border-radius: 0 16px 16px 0;
+    border-right: 1px solid var(--border-light);
+}
+
+.data-table tr:hover td {
+    transform: scale(1.01);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    z-index: 10;
+    position: relative;
+    border-color: transparent;
+}
+
+/* ==========================================
+   MODAIS E NOTIFICAÇÕES (TOAST)
+========================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 17, 40, 0.4);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.modal-overlay.ativa {
+    display: flex;
+    opacity: 1;
+}
+
+.modal {
+    width: 100%;
+    max-width: 540px;
+    transform: translateY(40px) scale(0.95);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    padding: 40px;
+}
+
+.modal-overlay.ativa .modal {
+    transform: translateY(0) scale(1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.modal-header h3 {
+    font-size: 1.6rem;
+    color: var(--text-title);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.btn-close {
+    background: #F1F5F9;
+    border: none;
+    font-size: 1.2rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-close:hover {
+    background: var(--danger);
+    color: white;
+    transform: rotate(90deg);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    margin-top: 40px;
+}
+
+#toast-container {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    z-index: 2000;
+}
+
+.toast {
+    background: white;
+    border-left: 5px solid var(--primary-orange);
+    padding: 20px 28px;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px -5px rgba(10, 17, 40, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text-title);
+    animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(120%) scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* ==========================================
+   TELA DE AUTENTICAÇÃO
+========================================== */
+.auth-wrapper {
+    display: flex;
+    width: 100%;
+    max-width: 1000px;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 24px;
+    box-shadow: 0 24px 48px -12px rgba(10, 17, 40, 0.15);
+    margin: 0 auto;
+    background: white;
+}
+
+.auth-info {
+    flex: 1;
+    padding: 60px;
+    background: var(--gradient-blue);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-info::after {
+    content: '';
+    position: absolute;
+    width: 150%;
+    height: 150%;
+    background: radial-gradient(circle, rgba(255, 106, 0, 0.1) 0%, transparent 60%);
+    top: -50%;
+    left: -50%;
+}
+
+.auth-forms {
+    flex: 1.1;
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.secao-form {
+    display: none;
+}
+
+.secao-form.ativa {
+    display: block;
+    animation: fadeIn 0.4s;
+}
+
+.auth-switch {
+    margin-top: 32px;
+    font-size: 14.5px;
+    text-align: center;
+    color: var(--text-light);
+}
+
+.auth-switch a {
+    color: var(--primary-orange);
+    font-weight: 800;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+.auth-switch a:hover {
+    color: var(--orange-hover);
+    text-decoration: underline;
+}
+
+/* ==========================================
+   BOTÕES HUB E EXTRAS
+========================================== */
+.btn-hub {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    color: white;
+    cursor: pointer;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    transition: all 0.2s;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.btn-hub:hover {
+    transform: translateY(-3px);
+    filter: brightness(1.1);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.btn-airbnb {
+    background: #ff5a5f;
+}
+
+.btn-booking {
+    background: #003580;
+}
+
+.btn-googleflights {
+    background: #1a73e8;
+}
+
+.btn-azul {
+    background: #002561;
+}
+
+.btn-gol {
+    background: #ff6000;
+}
+
+.btn-latam {
+    background: #e8112d;
+}
+
+.btn-buser {
+    background: #ff007a;
+}
+
+.btn-clickbus {
+    background: #00b14f;
+}
+
+.text-success {
+    color: var(--success) !important;
+}
+
+.text-danger {
+    color: var(--danger) !important;
+}
+
+.text-muted {
+    color: var(--text-light);
+}
+
+/* ==========================================
+   RESPONSIVIDADE (MOBILE)
+========================================== */
+@media (max-width: 900px) {
+    .auth-wrapper {
+        flex-direction: column;
+        border-radius: 20px;
+        max-width: 90%;
+    }
+
+    .auth-info {
+        padding: 40px 24px;
+        text-align: center;
+    }
+
+    .auth-forms {
+        padding: 40px 24px;
+    }
+
+    .sidebar {
+        left: -100%;
+        top: 0;
+        height: 100vh;
+        border-radius: 0 24px 24px 0;
+        transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .sidebar.aberto {
+        left: 0;
+        box-shadow: 20px 0 50px rgba(10, 17, 40, 0.3);
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 20px;
+        padding-top: 100px;
+        width: 100%;
+    }
+
+    .mobile-header {
+        display: flex;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 15px 24px;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 90;
+        box-shadow: 0 4px 20px rgba(10, 17, 40, 0.05);
+    }
+
+    .view-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}

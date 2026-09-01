@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlannerDuo - Sincronize sua Rotina</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body style="display: flex; flex-direction: column; min-height: 100vh;">
+    <nav
+        style="display: flex; justify-content: space-between; align-items: center; padding: 24px 5%; position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.4); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.4);">
+        <div class="logo-header">
+            <i class="fa-solid fa-heart logo-icon"></i>
+            <h2 style="color: var(--primary-blue); font-weight: 800; margin: 0; font-size: 1.5rem;">PlannerDuo</h2>
+        </div>
+        <div style="display: flex; gap: 16px;">
+            <a href="auth.html" class="btn-outline" style="text-decoration: none;">Entrar</a>
+            <a href="auth.html" class="btn-primary" style="text-decoration: none;">Acessar Sistema</a>
+        </div>
+    </nav>
+    <header
+        style="text-align: center; padding: 120px 20px 80px; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        <div style="max-width: 900px;">
+            <div
+                style="display: inline-block; background: rgba(255,255,255,0.6); backdrop-filter: blur(8px); color: var(--primary-blue); padding: 10px 24px; border-radius: 30px; font-weight: 700; font-size: 13px; margin-bottom: 32px; border: 1px solid rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 1px;">
+                Ambiente 100% Privado</div>
+            <h1
+                style="font-size: 4.5rem; color: var(--text-title); margin-bottom: 32px; line-height: 1.1; font-weight: 800; letter-spacing: -2px;">
+                O ecossistema do nosso planejamento.</h1>
+            <p
+                style="font-size: 1.3rem; color: var(--text-light); margin-bottom: 48px; line-height: 1.6; max-width: 700px; margin-left: auto; margin-right: auto;">
+                Gestão financeira transparente, acerto de contas automatizado e nossa central de viagens sincronizada em
+                tempo real na nuvem.</p>
+            <a href="auth.html" class="btn-primary"
+                style="padding: 20px 48px; font-size: 1.15rem; text-decoration: none; border-radius: 16px;"><i
+                    class="fa-solid fa-right-to-bracket"></i> Iniciar Sessão Segura</a>
+        </div>
+    </header>
+    <section
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; max-width: 1200px; margin: 0 auto 100px; padding: 0 5%;">
+        <div class="card-flat" style="text-align: center; padding: 48px 32px;">
+            <div
+                style="width: 72px; height: 72px; background: rgba(43,58,112,0.1); color: var(--primary-blue); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 28px;">
+                <i class="fa-solid fa-server"></i></div>
+            <h3 style="font-size: 1.4rem; color: var(--text-title); margin-bottom: 16px; font-weight: 800;">
+                Infraestrutura Dedicada</h3>
+            <p class="text-muted">Autenticação Firebase operando em tempo real. Acesso validado e independente em
+                qualquer dispositivo.</p>
+        </div>
+        <div class="card-flat" style="text-align: center; padding: 48px 32px;">
+            <div
+                style="width: 72px; height: 72px; background: rgba(43,58,112,0.1); color: var(--primary-blue); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 28px;">
+                <i class="fa-solid fa-scale-balanced"></i></div>
+            <h3 style="font-size: 1.4rem; color: var(--text-title); margin-bottom: 16px; font-weight: 800;">Finanças
+                Inteligentes</h3>
+            <p class="text-muted">Esqueça as planilhas manuais. O sistema calcula automaticamente o acerto de contas com
+                base nos registros.</p>
+        </div>
+        <div class="card-flat" style="text-align: center; padding: 48px 32px;">
+            <div
+                style="width: 72px; height: 72px; background: rgba(43,58,112,0.1); color: var(--primary-blue); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 28px;">
+                <i class="fa-solid fa-plane-up"></i></div>
+            <h3 style="font-size: 1.4rem; color: var(--text-title); margin-bottom: 16px; font-weight: 800;">Hub de
+                Viagens</h3>
+            <p class="text-muted">Nossos roteiros, links e orçamentos centralizados com gerador dinâmico de buscas
+                (Airbnb, Voos, ClickBus).</p>
+        </div>
+    </section>
+</body>
+
+</html>
