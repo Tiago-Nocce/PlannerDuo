@@ -28,7 +28,6 @@ body {
     overflow-x: hidden;
 }
 
-/* TELAS BASE */
 .tela {
     display: none;
     min-height: 100vh;
@@ -43,7 +42,6 @@ body {
     flex-direction: row;
 }
 
-/* LANDING PAGE */
 .landing-nav {
     display: flex;
     justify-content: space-between;
@@ -98,7 +96,6 @@ body {
     font-weight: 400;
 }
 
-/* COMPONENTES GERAIS */
 .card-flat {
     background: var(--card-bg);
     border-radius: 12px;
@@ -153,10 +150,61 @@ body {
     color: var(--text-light);
     font-size: 1.2rem;
     cursor: pointer;
+    transition: color 0.3s;
 }
 
 .btn-icon:hover {
     color: var(--primary-orange);
+}
+
+.btn-hub {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+    color: white;
+    cursor: pointer;
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    transition: opacity 0.2s;
+}
+
+.btn-hub:hover {
+    opacity: 0.85;
+}
+
+.btn-airbnb {
+    background: #ff5a5f;
+}
+
+.btn-booking {
+    background: #003580;
+}
+
+.btn-googleflights {
+    background: #1a73e8;
+}
+
+.btn-azul {
+    background: #002561;
+}
+
+.btn-gol {
+    background: #ff6000;
+}
+
+.btn-latam {
+    background: #e8112d;
+}
+
+.btn-buser {
+    background: #ff007a;
+}
+
+.btn-clickbus {
+    background: #00b14f;
 }
 
 .text-success {
@@ -188,7 +236,6 @@ body {
     color: var(--danger);
 }
 
-/* FORMULÁRIOS */
 .form-group {
     margin-bottom: 16px;
     text-align: left;
@@ -232,6 +279,7 @@ body {
     font-size: 14px;
     outline: none;
     background: #f8fafc;
+    transition: border-color 0.3s;
 }
 
 .input-wrapper input:focus,
@@ -240,7 +288,6 @@ body {
     background: white;
 }
 
-/* AUTH TELA */
 #tela-autenticacao {
     align-items: center;
     justify-content: center;
@@ -306,7 +353,6 @@ body {
     text-decoration: none;
 }
 
-/* APP LAYOUT - SIDEBAR & MAIN */
 .sidebar {
     width: 260px;
     background-color: var(--primary-blue);
@@ -371,6 +417,8 @@ body {
     justify-content: space-between;
     align-items: center;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+    font-size: 13px;
 }
 
 .main-content {
@@ -486,7 +534,6 @@ body {
     background: #f8fafc;
 }
 
-/* MODAIS E TOAST */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -582,7 +629,6 @@ body {
     }
 }
 
-/* RESPONSIVIDADE */
 @media (max-width: 860px) {
     .auth-wrapper {
         flex-direction: column;

@@ -14,7 +14,6 @@
 <body>
     <div id="toast-container"></div>
 
-    <!-- TELA 1: LANDING PAGE -->
     <div id="tela-landing" class="tela ativa">
         <nav class="landing-nav">
             <div class="logo-header">
@@ -61,7 +60,6 @@
         </section>
     </div>
 
-    <!-- TELA 2: AUTENTICAÇÃO -->
     <div id="tela-autenticacao" class="tela">
         <div class="auth-wrapper card-flat">
             <div class="auth-info">
@@ -117,7 +115,6 @@
         </div>
     </div>
 
-    <!-- TELA 3: APLICAÇÃO PRINCIPAL -->
     <div id="tela-app" class="tela">
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -147,7 +144,6 @@
                 <button id="btn-menu-mobile" class="btn-icon"><i class="fa-solid fa-bars"></i></button>
             </header>
 
-            <!-- DASHBOARD -->
             <section id="dashboard" class="view ativa">
                 <h2 class="view-title">Visão Geral</h2>
                 <div class="dashboard-grid">
@@ -172,7 +168,6 @@
                             <p id="stat-acerto" class="text-success">Tudo quite!</p>
                         </div>
                     </div>
-                    <!-- GRÁFICO (NOVO) -->
                     <div class="card-flat" style="grid-column: 1 / -1; height: 320px; padding: 20px;">
                         <h3 style="margin-bottom: 15px; color: var(--text-title);"><i class="fa-solid fa-chart-pie"></i>
                             Distribuição de Despesas</h3>
@@ -183,17 +178,87 @@
                 </div>
             </section>
 
-            <!-- VIAGENS -->
             <section id="viagens" class="view">
                 <div class="view-header">
                     <h2 class="view-title">Central de Viagens</h2>
                     <button class="btn-primary" onclick="UI.abrirModal('modal-viagem')"><i class="fa-solid fa-plus"></i>
                         Salvar Roteiro</button>
                 </div>
+                <div class="hub-viagens card-flat"
+                    style="margin-bottom: 30px; border-left: 4px solid var(--primary-orange);">
+                    <h3 style="margin-bottom: 16px; font-weight: 700; color: var(--text-title);"><i
+                            class="fa-solid fa-magnifying-glass-location"></i> Busca Inteligente</h3>
+                    <div
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div class="form-group"><label>Origem</label>
+                            <div class="input-wrapper"><input type="text" id="busca-origem" value="Belo Horizonte">
+                            </div>
+                        </div>
+                        <div class="form-group"><label>Destino</label>
+                            <div class="input-wrapper"><input type="text" id="busca-destino"
+                                    placeholder="Ex: Rio de Janeiro"></div>
+                        </div>
+                        <div class="form-group"><label>Ida</label>
+                            <div class="input-wrapper"><input type="date" id="busca-data-ida"></div>
+                        </div>
+                        <div class="form-group"><label>Volta</label>
+                            <div class="input-wrapper"><input type="date" id="busca-data-volta"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Viajantes</label>
+                            <div class="input-wrapper">
+                                <select id="busca-passageiros">
+                                    <option value="2" selected>2 Pessoas (Casal)</option>
+                                    <option value="1">1 Pessoa</option>
+                                    <option value="4">Família (4+)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        style="display: flex; flex-direction: column; gap: 12px; padding-top: 15px; border-top: 1px solid var(--border-light);">
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <span style="font-size: 13px; font-weight: 600; min-width: 90px;"><i
+                                    class="fa-solid fa-bed"></i> Hotéis:</span>
+                            <button onclick="ServicoBusca.redirecionar('airbnb')" class="btn-hub btn-airbnb"><i
+                                    class="fa-brands fa-airbnb"></i> Airbnb</button>
+                            <button onclick="ServicoBusca.redirecionar('booking')" class="btn-hub btn-booking"><i
+                                    class="fa-solid fa-hotel"></i> Booking</button>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <span style="font-size: 13px; font-weight: 600; min-width: 90px;"><i
+                                    class="fa-solid fa-plane"></i> Voos:</span>
+                            <button onclick="ServicoBusca.redirecionar('googleflights')"
+                                class="btn-hub btn-googleflights"><i class="fa-brands fa-google"></i> Google
+                                Voos</button>
+                            <button onclick="ServicoBusca.redirecionar('azul')" class="btn-hub btn-azul">Azul</button>
+                            <button onclick="ServicoBusca.redirecionar('gol')" class="btn-hub btn-gol">Gol</button>
+                            <button onclick="ServicoBusca.redirecionar('latam')"
+                                class="btn-hub btn-latam">LATAM</button>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <span style="font-size: 13px; font-weight: 600; min-width: 90px;"><i
+                                    class="fa-solid fa-bus"></i> Ônibus:</span>
+                            <button onclick="ServicoBusca.redirecionar('buser')" class="btn-hub btn-buser"><i
+                                    class="fa-solid fa-bus-simple"></i> Buser</button>
+                            <button onclick="ServicoBusca.redirecionar('clickbus')" class="btn-hub btn-clickbus"><i
+                                    class="fa-solid fa-bus"></i> ClickBus</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 40px; margin-bottom: 20px;">
+                    <h3 style="color: var(--text-title); font-size: 1.2rem; margin-bottom: 12px;"><i
+                            class="fa-solid fa-map-location-dot"></i> Meus Roteiros Salvos</h3>
+                    <div class="input-wrapper" style="max-width: 400px;">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="filtro-roteiros" placeholder="Pesquisar roteiro salvo pelo destino...">
+                    </div>
+                </div>
+
                 <div id="lista-viagens" class="cards-grid"></div>
             </section>
 
-            <!-- FINANÇAS -->
             <section id="financas" class="view">
                 <div class="view-header">
                     <h2 class="view-title">Finanças Compartilhadas</h2>
@@ -222,7 +287,6 @@
                 </div>
             </section>
 
-            <!-- METAS -->
             <section id="metas" class="view">
                 <div class="view-header">
                     <h2 class="view-title">Metas do Casal</h2>
@@ -234,7 +298,7 @@
         </main>
     </div>
 
-    <!-- MODAIS DE CADASTRO -->
+    <!-- MODAIS -->
     <div id="modal-viagem" class="modal-overlay">
         <div class="modal card-flat">
             <div class="modal-header">
@@ -259,13 +323,18 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Orçamento (R$)</label>
+                    <label>Link da Reserva (Opcional)</label>
+                    <div class="input-wrapper"><i class="fa-solid fa-link"></i><input type="url" id="viagem-link"
+                            placeholder="https://..."></div>
+                </div>
+                <div class="form-group">
+                    <label>Orçamento Estimado (R$)</label>
                     <div class="input-wrapper"><i class="fa-solid fa-dollar-sign"></i><input type="number"
                             id="viagem-orcamento" step="0.01" required></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-outline" onclick="UI.fecharModal('modal-viagem')">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar</button>
+                    <button type="submit" class="btn-primary">Salvar Roteiro</button>
                 </div>
             </form>
         </div>
@@ -305,8 +374,8 @@
                         <label>Quem Pagou?</label>
                         <div class="input-wrapper">
                             <select id="financa-resp" required>
-                                <option value="Eu">Eu</option>
-                                <option value="Ele(a)">Ele(a)</option>
+                                <option value="Tiago">Tiago</option>
+                                <option value="Yasmin">Yasmin</option>
                             </select>
                         </div>
                     </div>
@@ -349,7 +418,6 @@
         </div>
     </div>
 
-    <!-- FIREBASE SDKS -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="app.js"></script>

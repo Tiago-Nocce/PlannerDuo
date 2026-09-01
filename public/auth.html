@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso - PlannerDuo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body style="display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg-main);">
+    <div id="toast-container"></div>
+
+    <div class="auth-wrapper card-flat">
+        <div class="auth-info">
+            <div class="logo-header">
+                <i class="fa-solid fa-heart logo-icon"></i>
+                <h1 style="color: white;">PlannerDuo</h1>
+            </div>
+            <h2 style="color: rgba(255,255,255,0.9); margin-top: 10px; font-weight: 500;">Acesso Seguro</h2>
+        </div>
+        <div class="auth-forms">
+            <div id="secao-login" class="secao-form ativa">
+                <h2>Bem-vindo de volta!</h2>
+                <form id="form-login">
+                    <div class="form-group">
+                        <label>E-mail do Casal</label>
+                        <div class="input-wrapper"><i class="fa-regular fa-envelope"></i><input type="email"
+                                id="login-email" required></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Senha</label>
+                        <div class="input-wrapper"><i class="fa-solid fa-lock"></i><input type="password"
+                                id="login-senha" required></div>
+                    </div>
+                    <button type="submit" class="btn-primary btn-block">Entrar no Sistema</button>
+                </form>
+                <p class="auth-switch">Primeiro acesso? <a href="#" onclick="AlternarAuth('cadastro')">Criar conta</a>
+                </p>
+            </div>
+
+            <div id="secao-cadastro" class="secao-form">
+                <h2>Criar Conta Segura</h2>
+                <form id="form-cadastro">
+                    <div class="form-group">
+                        <label>E-mail Compartilhado</label>
+                        <div class="input-wrapper"><i class="fa-regular fa-envelope"></i><input type="email"
+                                id="cadastro-email" required></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Senha Segura</label>
+                        <div class="input-wrapper"><i class="fa-solid fa-lock"></i><input type="password"
+                                id="cadastro-senha" placeholder="Mín. 6 caracteres" required></div>
+                    </div>
+                    <button type="submit" class="btn-primary btn-block">Registrar Casal</button>
+                </form>
+                <p class="auth-switch">Já registraram? <a href="#" onclick="AlternarAuth('login')">Fazer Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="app.js"></script>
+    <script>
+        function AlternarAuth(tipo) {
+            document.querySelectorAll('.secao-form').forEach(s => s.classList.remove('ativa'));
+            document.getElementById(`secao-${tipo}`).classList.add('ativa');
+        }
+    </script>
+</body>
+
+</html>
