@@ -1,5 +1,5 @@
 // ==========================================
-// CONFIGURAÇÃO DO FIREBASE
+// CONFIGURAÇÃO DO FIREBASE (Enriquecido com Storage)
 // ==========================================
 const firebaseConfig = {
     apiKey: "AIzaSyAywzg4yDP0p15RpnFwPc2Y2MGoT2U5l4M",
@@ -16,6 +16,7 @@ if (!firebase.apps.length) {
 }
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage(); // [Engenharia] Instância de manipulação binária
 
 // ==========================================
 // ESTADO GLOBAL & UTILITÁRIOS
@@ -63,11 +64,14 @@ const UI = {
                 if (alvoId === 'viagens') Render.viagens();
             });
         });
+        document.getElementById('btn-menu-mobile')?.addEventListener('click', () => {
+            document.querySelector('.sidebar').classList.toggle('aberto');
+        });
     }
 };
 
 // ==========================================
-// FIREBASE AUTHENTICATION (PROTEÇÃO DE ROTA)
+// FIREBASE AUTHENTICATION
 // ==========================================
 const Auth = {
     iniciarObserver: () => {
@@ -99,31 +103,28 @@ const Auth = {
         e.preventDefault();
         const email = document.getElementById('login-email').value;
         const senha = document.getElementById('login-senha').value;
-
         auth.signInWithEmailAndPassword(email, senha)
             .then(() => UI.mostrarToast("Login realizado com sucesso!"))
-            .catch((error) => UI.mostrarToast("Erro no login. E-mail ou senha incorretos.", "erro"));
+            .catch((error) => UI.mostrarToast("Erro no login. Verifique as credenciais.", "erro"));
     },
     cadastro: (e) => {
         e.preventDefault();
         const email = document.getElementById('cadastro-email').value;
         const senha = document.getElementById('cadastro-senha').value;
-
         auth.createUserWithEmailAndPassword(email, senha)
             .then(() => UI.mostrarToast("Conta segura criada com sucesso!"))
             .catch((error) => UI.mostrarToast(error.message, "erro"));
     },
     logout: () => {
-        if (confirm('Encerrar sessão segura?')) {
-            auth.signOut();
-        }
+        if (confirm('Encerrar sessão segura?')) auth.signOut();
     }
 };
 
 // ==========================================
-// BANCO DE DADOS EM TEMPO REAL E MOTOR DE BUSCA
+// BUSCA E MOTOR DE DADOS
 // ==========================================
 const ServicoBusca = {
+    // ... [Mantido sem alterações para a geração dos links de viagem] ...
     redirecionar: (plataforma) => {
         const origem = document.getElementById('busca-origem').value.trim();
         const destino = document.getElementById('busca-destino').value.trim();
@@ -186,21 +187,49 @@ const Controladores = {
         });
         Controladores.salvarNaNuvem('viagens');
         UI.fecharModal('modal-viagem');
-        UI.mostrarToast('Roteiro e link salvos na nuvem!');
+        UI.mostrarToast('Roteiro salvo na nuvem!');
     },
-    adicionarFinanca: (e) => {
+    // [Engenharia] Função assíncrona para upload no Storage antes de persistir no Firestore
+    adicionarFinanca: async (e) => {
         e.preventDefault();
-        Estado.financas.push({
-            id: Utils.gerarId(),
-            desc: document.getElementById('financa-desc').value,
-            tipo: document.getElementById('financa-tipo').value,
-            valor: parseFloat(document.getElementById('financa-valor').value),
-            resp: document.getElementById('financa-resp').value,
-            data: document.getElementById('financa-data').value
-        });
-        Controladores.salvarNaNuvem('financas');
-        UI.fecharModal('modal-financa');
-        UI.mostrarToast('Nova transação registrada!');
+        const btnSubmit = document.getElementById('btn-salvar-financa');
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
+        btnSubmit.disabled = true;
+
+        try {
+            let comprovanteUrl = null;
+            const fileInput = document.getElementById('financa-comprovante');
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const fileRef = storage.ref(`comprovantes/${Estado.usuarioUid}/${Date.now()}_${file.name}`);
+                await fileRef.put(file);
+                comprovanteUrl = await fileRef.getDownloadURL();
+            }
+
+            Estado.financas.push({
+                id: Utils.gerarId(),
+                desc: document.getElementById('financa-desc').value,
+                tipo: document.getElementById('financa-tipo').value,
+                categoria: document.getElementById('financa-categoria').value,
+                valor: parseFloat(document.getElementById('financa-valor').value),
+                resp: document.getElementById('financa-resp').value,
+                rateio: parseInt(document.getElementById('financa-rateio').value),
+                recorrente: document.getElementById('financa-recorrente').checked,
+                data: document.getElementById('financa-data').value,
+                comprovante: comprovanteUrl
+            });
+
+            await Controladores.salvarNaNuvem('financas');
+            UI.fecharModal('modal-financa');
+            UI.mostrarToast('Nova transação registrada!');
+        } catch (error) {
+            UI.mostrarToast('Erro ao processar transação.', 'erro');
+            console.error(error);
+        } finally {
+            btnSubmit.innerHTML = 'Salvar Transação';
+            btnSubmit.disabled = false;
+        }
     },
     adicionarMeta: (e) => {
         e.preventDefault();
@@ -222,22 +251,38 @@ const Controladores = {
     }
 };
 
+// ==========================================
+// RENDERIZAÇÃO & ANALYTICS
+// ==========================================
 let chartInstancia = null;
 const Analytics = {
     atualizarGrafico: () => {
         const ctx = document.getElementById('graficoDespesas')?.getContext('2d');
         if (!ctx) return;
-        const tiagoTotal = Estado.financas.filter(f => f.tipo === 'despesa' && f.resp === 'Tiago').reduce((s, f) => s + f.valor, 0);
-        const yasminTotal = Estado.financas.filter(f => f.tipo === 'despesa' && f.resp === 'Yasmin').reduce((s, f) => s + f.valor, 0);
+
+        // [Engenharia] Filtro de tempo rígido para forçar o mês vigente
+        const dataAtual = new Date();
+        const mesAtual = dataAtual.getMonth();
+        const anoAtual = dataAtual.getFullYear();
+
+        const gastosPorCategoria = Estado.financas.filter(f => {
+            if (f.tipo !== 'despesa' || !f.data) return false;
+            const dataTransacao = new Date(f.data + 'T12:00:00');
+            return dataTransacao.getMonth() === mesAtual && dataTransacao.getFullYear() === anoAtual;
+        }).reduce((acc, f) => {
+            const cat = f.categoria || 'Outros';
+            acc[cat] = (acc[cat] || 0) + f.valor;
+            return acc;
+        }, {});
 
         if (chartInstancia) chartInstancia.destroy();
         chartInstancia = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Pagos por Tiago', 'Pagos por Yasmin'],
+                labels: Object.keys(gastosPorCategoria),
                 datasets: [{
-                    data: [tiagoTotal, yasminTotal],
-                    backgroundColor: ['#2B3A70', '#E87A3E'],
+                    data: Object.values(gastosPorCategoria),
+                    backgroundColor: ['#2B3A70', '#E87A3E', '#10B981', '#F59E0B', '#6366F1', '#94A3B8'],
                     borderWidth: 0
                 }]
             },
@@ -246,58 +291,53 @@ const Analytics = {
     }
 };
 
-const Exportacao = {
-    gerarCSV: () => {
-        if (!Estado.financas.length) return UI.mostrarToast('Sem dados para exportar', 'erro');
-        const cabecalho = "Data,Descricao,Responsavel,Tipo,Valor\n";
-        const linhas = Estado.financas.map(f => `${f.data},"${f.desc}",${f.resp},${f.tipo},${f.valor}`).join("\n");
-        const blob = new Blob([cabecalho + linhas], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `relatorio_plannerduo_${Date.now()}.csv`;
-        link.style.display = "none";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        UI.mostrarToast('Download em CSV iniciado!');
-    }
-};
-
-// ==========================================
-// RENDERIZAÇÃO
-// ==========================================
 const Render = {
     tudo: () => { Render.dashboard(); Render.viagens(); Render.financas(); Render.metas(); },
     dashboard: () => {
         if (!document.getElementById('stat-next-trip')) return;
+
+        // Setup Viagem
         const futuras = Estado.viagens.filter(v => new Date(v.ida) >= new Date().setHours(0, 0, 0, 0)).sort((a, b) => new Date(a.ida) - new Date(b.ida));
         document.getElementById('stat-next-trip').innerText = futuras.length ? futuras[0].destino : 'Nenhuma';
 
-        const despesasMes = Estado.financas.filter(f => f.tipo === 'despesa').reduce((s, f) => s + f.valor, 0);
-        document.getElementById('stat-expenses').innerText = Utils.formatarMoeda(despesasMes);
+        // [Engenharia] Correção de Escopo de Despesas do Mês Atual
+        const dataAtual = new Date();
+        const mesAtual = dataAtual.getMonth();
+        const anoAtual = dataAtual.getFullYear();
 
-        const tiago = Estado.financas.filter(f => f.tipo === 'despesa' && f.resp === 'Tiago').reduce((s, f) => s + f.valor, 0);
-        const yasmin = Estado.financas.filter(f => f.tipo === 'despesa' && f.resp === 'Yasmin').reduce((s, f) => s + f.valor, 0);
-        const dif = Math.abs(tiago - yasmin) / 2;
+        const despesasMesVigente = Estado.financas.filter(f => {
+            if (f.tipo !== 'despesa' || !f.data) return false;
+            const d = new Date(f.data + 'T12:00:00');
+            return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+        }).reduce((s, f) => s + f.valor, 0);
+        document.getElementById('stat-expenses').innerText = Utils.formatarMoeda(despesasMesVigente);
+
+        // [Engenharia] Lógica de Rateio (Saldo devedor total acumulado)
+        const saldoTiago = Estado.financas.filter(f => f.tipo === 'despesa').reduce((acc, f) => {
+            const porcentagemPaga = f.rateio || 50;
+            const porcentagemDevida = 100 - porcentagemPaga;
+            const valorDevidoAQuemPagou = f.valor * (porcentagemDevida / 100);
+
+            if (f.resp === 'Tiago') return acc + valorDevidoAQuemPagou;
+            if (f.resp === 'Yasmin') return acc - valorDevidoAQuemPagou;
+            return acc;
+        }, 0);
+
         const elAcerto = document.getElementById('stat-acerto');
-
-        if (tiago > yasmin) elAcerto.innerHTML = `Yasmin deve pagar<br>+ ${Utils.formatarMoeda(dif)}`;
-        else if (yasmin > tiago) elAcerto.innerHTML = `Tiago deve pagar<br>- ${Utils.formatarMoeda(dif)}`;
+        if (saldoTiago > 0) elAcerto.innerHTML = `Yasmin deve pagar<br>+ ${Utils.formatarMoeda(saldoTiago)}`;
+        else if (saldoTiago < 0) elAcerto.innerHTML = `Tiago deve pagar<br>- ${Utils.formatarMoeda(Math.abs(saldoTiago))}`;
         else elAcerto.innerText = 'Tudo quite!';
 
         if (document.getElementById('dashboard').classList.contains('ativa')) Analytics.atualizarGrafico();
     },
+    // ... [Mantida função viagens intacta] ...
     viagens: () => {
         const lista = document.getElementById('lista-viagens');
         if (!lista) return;
-
         const campoFiltro = document.getElementById('filtro-roteiros');
         const termoBusca = campoFiltro ? campoFiltro.value.toLowerCase() : '';
-
         const viagensFiltradas = Estado.viagens.filter(v => v.destino.toLowerCase().includes(termoBusca));
-
         lista.innerHTML = viagensFiltradas.length ? '' : '<p class="text-muted" style="grid-column: 1 / -1;">Nenhum roteiro salvo encontrado.</p>';
-
         viagensFiltradas.sort((a, b) => new Date(a.ida) - new Date(b.ida)).forEach(v => {
             lista.innerHTML += `
                 <div class="card-flat">
@@ -316,18 +356,25 @@ const Render = {
     financas: () => {
         const lista = document.getElementById('lista-financas');
         if (!lista) return;
-        lista.innerHTML = Estado.financas.length ? '' : '<tr><td colspan="5" style="text-align: center;" class="text-muted">Nenhuma movimentação.</td></tr>';
+        lista.innerHTML = Estado.financas.length ? '' : '<tr><td colspan="6" style="text-align: center;" class="text-muted">Nenhuma movimentação.</td></tr>';
+
         [...Estado.financas].sort((a, b) => new Date(b.data) - new Date(a.data)).forEach(f => {
+            const badgeRecorrente = f.recorrente ? `<i class="fa-solid fa-rotate text-success" title="Recorrente"></i> ` : '';
+            const tagCategoria = `<span style="font-size: 0.75rem; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #475569; margin-left: 8px;">${f.categoria || 'Outros'}</span>`;
+            const iconAnexo = f.comprovante ? `<a href="${f.comprovante}" target="_blank" class="btn-icon text-success" style="font-size: 1.1rem;"><i class="fa-solid fa-file-invoice-dollar"></i></a>` : '<span class="text-muted">-</span>';
+
             lista.innerHTML += `
                 <tr>
                     <td>${Utils.formatarData(f.data)}</td>
-                    <td style="font-weight: 600;">${f.desc}</td>
-                    <td>${f.resp}</td>
+                    <td style="font-weight: 600;">${badgeRecorrente}${f.desc}${tagCategoria}</td>
+                    <td>${f.resp} ${f.rateio ? `<small class="text-muted">(${f.rateio}%)</small>` : ''}</td>
                     <td><span class="badge ${f.tipo}">${f.tipo === 'receita' ? '+' : '-'} ${Utils.formatarMoeda(f.valor)}</span></td>
+                    <td style="text-align: center;">${iconAnexo}</td>
                     <td><button class="btn-icon text-danger" onclick="Controladores.deletar('financa', '${f.id}')"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>`;
         });
     },
+    // ... [Mantida função metas intacta] ...
     metas: () => {
         const lista = document.getElementById('lista-metas');
         if (!lista) return;
@@ -348,25 +395,34 @@ const Render = {
     }
 };
 
+const Exportacao = {
+    gerarCSV: () => {
+        if (!Estado.financas.length) return UI.mostrarToast('Sem dados para exportar', 'erro');
+        const cabecalho = "Data,Descricao,Categoria,Responsavel,Rateio_Pagador,Tipo,Valor\n";
+        const linhas = Estado.financas.map(f => `${f.data},"${f.desc}","${f.categoria || ''}",${f.resp},${f.rateio || 50},${f.tipo},${f.valor}`).join("\n");
+        const blob = new Blob([cabecalho + linhas], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `relatorio_plannerduo_${Date.now()}.csv`;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        UI.mostrarToast('Download em CSV iniciado!');
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Escuta estado de login em todas as páginas para redirecionamento imediato
     Auth.iniciarObserver();
 
-    // Eventos da página de Auth
-    const formLogin = document.getElementById('form-login');
-    if (formLogin) formLogin.addEventListener('submit', Auth.login);
-    const formCadastro = document.getElementById('form-cadastro');
-    if (formCadastro) formCadastro.addEventListener('submit', Auth.cadastro);
+    if (document.getElementById('form-login')) document.getElementById('form-login').addEventListener('submit', Auth.login);
+    if (document.getElementById('form-cadastro')) document.getElementById('form-cadastro').addEventListener('submit', Auth.cadastro);
 
-    // Eventos da página do App Principal
     if (window.location.pathname.includes('app.html')) {
         document.getElementById('form-viagem')?.addEventListener('submit', Controladores.adicionarViagem);
         document.getElementById('form-financa')?.addEventListener('submit', Controladores.adicionarFinanca);
         document.getElementById('form-meta')?.addEventListener('submit', Controladores.adicionarMeta);
-
-        const filtroInput = document.getElementById('filtro-roteiros');
-        if (filtroInput) filtroInput.addEventListener('input', Render.viagens);
-
+        document.getElementById('filtro-roteiros')?.addEventListener('input', Render.viagens);
         UI.setupNav();
     }
 });
