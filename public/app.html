@@ -29,6 +29,7 @@
     PlannerDuo
   </div>
   <div class="loader-bar"></div>
+  <p id="loader-msg" style="font-size:.8rem;color:var(--text-muted);margin-top:8px;min-height:20px"></p>
 </div>
 
 <!-- ════════════════════════════════════════════════
@@ -1060,5 +1061,17 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script src="app.js"></script>
+
+<script>
+  // Timeout de segurança: se o loader ainda estiver visível após 10s,
+  // provavelmente há um problema de rede ou autenticação — redireciona para login.
+  setTimeout(() => {
+    const loader = document.getElementById('loader-tela');
+    if (loader && loader.style.display !== 'none' && !loader.classList.contains('saindo')) {
+      const msg = document.getElementById('loader-msg');
+      if (msg) msg.innerHTML = 'Demorando mais que o esperado... <a href="auth.html" style="color:var(--brand-blue);font-weight:600">Ir para o login</a>';
+    }
+  }, 8000);
+</script>
 </body>
 </html>

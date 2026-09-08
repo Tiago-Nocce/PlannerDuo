@@ -8,9 +8,20 @@
     ],
     "rewrites": [
       {
+        "source": "/app",
+        "destination": "/app.html"
+      },
+      {
+        "source": "/auth",
+        "destination": "/auth.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
     ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
   }
 }

@@ -221,9 +221,10 @@ function toggleTema() {
 const Auth = {
     iniciarObserver: () => {
         auth.onAuthStateChanged(async (user) => {
-            const path     = window.location.pathname;
-            const isApp    = path.includes('app.html');
-            const isAuth   = path.includes('auth.html');
+            const path      = window.location.pathname;
+            // Funciona tanto em produção (/app.html) quanto em dev local (127.0.0.1/app.html)
+            const isApp     = path.endsWith('app.html')  || path.endsWith('app.html/');
+            const isAuth    = path.endsWith('auth.html') || path.endsWith('auth.html/');
             const isLanding = !isApp && !isAuth;
 
             if (user) {
@@ -236,45 +237,49 @@ const Auth = {
                 }
 
                 if (isApp) {
-                    // Verifica se este usuário está autorizado (campo membros no doc do casal)
                     try {
-                        const doc = await db.collection('casais').doc(CASAL_DOC_ID).get();
-                        if (doc.exists) {
-                            const dados = doc.data();
-                            const membros = dados.membros || {};
-                            // membros: { 'email': 'Nome', ... }
-                            const nomeEncontrado = membros[user.email] || membros[user.email.toLowerCase()];
+                        const docSnap = await db.collection('casais').doc(CASAL_DOC_ID).get();
 
-                            if (!nomeEncontrado) {
-                                // E-mail não está na lista de membros
+                        if (docSnap.exists) {
+                            const dados   = docSnap.data();
+                            const membros = dados.membros || {};
+                            const nome    = membros[user.email] || membros[user.email.toLowerCase()];
+
+                            if (!nome) {
                                 Auth._bloquear();
                                 return;
                             }
 
-                            Estado.nomeUsuario = nomeEncontrado;
+                            Estado.nomeUsuario = nome;
                             Estado.nome1 = dados.nome1 || 'Tiago';
                             Estado.nome2 = dados.nome2 || 'Yasmin';
+
                         } else {
-                            // Documento ainda não existe: primeiro acesso, cria estrutura
+                            // Documento não existe ainda — cria estrutura base
                             await Auth._criarDocCasal(user);
                         }
 
                         Auth._entrarNoApp(user);
 
                     } catch (err) {
-                        console.error(err);
-                        UI.toast('Erro de conexão', 'Verifique sua internet.', 'erro');
+                        console.error('Auth error:', err);
+                        // Mostra erro mas ainda esconde o loader para não travar
+                        Auth._esconderLoader();
+                        UI.toast('Erro de conexão', 'Verifique sua internet e recarregue.', 'erro');
                     }
                 }
             } else {
-                if (isApp) window.location.href = 'auth.html';
+                if (isApp) {
+                    window.location.href = 'auth.html';
+                }
             }
         });
     },
 
     _entrarNoApp: (user) => {
         // Sidebar: nome + inicial
-        const nome = Estado.nomeUsuario || user.email;
+        const nome = Estado.nomeUsuario || user.displayName || user.email.split('@')[0];
+        Estado.nomeUsuario = nome;
         document.getElementById('sidebar-user-name').textContent = nome;
         document.getElementById('sidebar-avatar').textContent    = Utils.inicial(nome);
 
@@ -291,11 +296,7 @@ const Auth = {
         DB.ouvirNuvem();
 
         // Esconder loader
-        const loader = document.getElementById('loader-tela');
-        if (loader) {
-            loader.classList.add('saindo');
-            setTimeout(() => loader.style.display = 'none', 500);
-        }
+        Auth._esconderLoader();
         const app = document.getElementById('tela-app');
         if (app) app.style.opacity = '1';
 
@@ -312,6 +313,16 @@ const Auth = {
         Render.tudo();
     },
 
+    _esconderLoader: () => {
+        const loader = document.getElementById('loader-tela');
+        if (loader) {
+            loader.classList.add('saindo');
+            setTimeout(() => { loader.style.display = 'none'; }, 500);
+        }
+        const app = document.getElementById('tela-app');
+        if (app) app.style.opacity = '1';
+    },
+
     _bloquear: () => {
         auth.signOut();
         alert('Acesso não autorizado. Este sistema é exclusivo para Tiago & Yasmin.');
@@ -319,20 +330,19 @@ const Auth = {
     },
 
     _criarDocCasal: async (user) => {
-        // Só cria se o documento não existir ainda.
-        // O primeiro usuário que logar cria a estrutura base.
-        // O segundo precisará ser adicionado manualmente ao campo membros.
-        // Para facilitar, criamos com os dois e-mails vindos do cadastro (auth.html).
+        // Primeiro acesso — cria o documento compartilhado do casal.
+        // O nome da pessoa 1 vem do e-mail (pode ser atualizado depois).
+        const nomeInferido = user.displayName || user.email.split('@')[0];
+        Estado.nomeUsuario = nomeInferido;
+        Estado.nome1 = nomeInferido;
+        Estado.nome2 = 'Parceiro(a)';
         await db.collection('casais').doc(CASAL_DOC_ID).set({
             nome1: Estado.nome1,
             nome2: Estado.nome2,
-            membros: {
-                [user.email]: Estado.nome1 // quem criou = pessoa 1; pessoa 2 será adicionada via cadastro
-            },
+            membros: { [user.email]: Estado.nome1 },
             viagens: [], financas: [], metas: [], checklist: [],
             criadoEm: new Date().toISOString()
         });
-        Estado.nomeUsuario = Estado.nome1;
     },
 
     logout: () => {
