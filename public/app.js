@@ -679,7 +679,7 @@ const TEMPLATES = {
         { texto:'Fantasia (festa temática)',  cat:'roupas' },
         { texto:'Protetor solar SPF 50+',    cat:'higiene' },
         { texto:'Remédio para enjoo',        cat:'saude' },
-        { texto:'Câmera à prova d'água',     cat:'tecnologia' },
+        { texto:'Câmera à prova d`água',     cat:'tecnologia' },
         { texto:'Óculos de sol',             cat:'outros' },
         { texto:'Dinheiro em espécie',       cat:'documentos' },
     ]
