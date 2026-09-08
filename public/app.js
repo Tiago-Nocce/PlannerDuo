@@ -220,11 +220,10 @@ function toggleTema() {
 // ============================================================
 const Auth = {
     iniciarObserver: () => {
-        auth.onAuthStateChanged(async (user) => {
+        auth.onAuthStateChanged((user) => {
             const path      = window.location.pathname;
-            // Funciona tanto em produção (/app.html) quanto em dev local (127.0.0.1/app.html)
-            const isApp     = path.endsWith('app.html')  || path.endsWith('app.html/');
-            const isAuth    = path.endsWith('auth.html') || path.endsWith('auth.html/');
+            const isApp     = path.includes('app.html');
+            const isAuth    = path.includes('auth.html');
             const isLanding = !isApp && !isAuth;
 
             if (user) {
@@ -237,36 +236,8 @@ const Auth = {
                 }
 
                 if (isApp) {
-                    try {
-                        const docSnap = await db.collection('casais').doc(CASAL_DOC_ID).get();
-
-                        if (docSnap.exists) {
-                            const dados   = docSnap.data();
-                            const membros = dados.membros || {};
-                            const nome    = membros[user.email] || membros[user.email.toLowerCase()];
-
-                            if (!nome) {
-                                Auth._bloquear();
-                                return;
-                            }
-
-                            Estado.nomeUsuario = nome;
-                            Estado.nome1 = dados.nome1 || 'Tiago';
-                            Estado.nome2 = dados.nome2 || 'Yasmin';
-
-                        } else {
-                            // Documento não existe ainda — cria estrutura base
-                            await Auth._criarDocCasal(user);
-                        }
-
-                        Auth._entrarNoApp(user);
-
-                    } catch (err) {
-                        console.error('Auth error:', err);
-                        // Mostra erro mas ainda esconde o loader para não travar
-                        Auth._esconderLoader();
-                        UI.toast('Erro de conexão', 'Verifique sua internet e recarregue.', 'erro');
-                    }
+                    // Entra direto sem esperar Firestore — carrega dados em paralelo
+                    Auth._entrarNoApp(user);
                 }
             } else {
                 if (isApp) {
@@ -375,22 +346,49 @@ const DB = {
         if (Estado.unsubscribe) Estado.unsubscribe();
         Estado.unsubscribe = db.collection('casais').doc(CASAL_DOC_ID)
             .onSnapshot((doc) => {
-                if (!doc.exists) return;
+                if (!doc.exists) {
+                    // Documento não existe — cria automaticamente
+                    DB._criarDocInicial();
+                    return;
+                }
                 const dados = doc.data();
                 Estado.viagens   = dados.viagens   || [];
                 Estado.financas  = dados.financas  || [];
                 Estado.metas     = dados.metas     || [];
                 Estado.checklist = dados.checklist || [];
-                if (dados.nome1) Estado.nome1 = dados.nome1;
+                if (dados.nome1) {
+                    Estado.nome1 = dados.nome1;
+                    // Atualiza nome do usuário logado pelo campo membros
+                    if (dados.membros && dados.membros[Estado.usuarioEmail]) {
+                        Estado.nomeUsuario = dados.membros[Estado.usuarioEmail];
+                        const elNome = document.getElementById('sidebar-user-name');
+                        const elAv   = document.getElementById('sidebar-avatar');
+                        if (elNome) elNome.textContent = Estado.nomeUsuario;
+                        if (elAv)   elAv.textContent   = Utils.inicial(Estado.nomeUsuario);
+                    }
+                }
                 if (dados.nome2) Estado.nome2 = dados.nome2;
                 UI.atualizarNomes();
-                // Atualiza cache local silenciosamente
                 localStorage.setItem('pd-cache', JSON.stringify(dados));
                 Render.tudo();
             }, (err) => {
-                console.error('Firestore:', err);
-                UI.toast('Erro de sincronização', 'Verifique sua conexão.', 'erro');
+                console.warn('Firestore onSnapshot erro:', err.code, err.message);
+                // Não trava o app — continua com dados do cache
             });
+    },
+
+    _criarDocInicial: async () => {
+        try {
+            await db.collection('casais').doc(CASAL_DOC_ID).set({
+                nome1: Estado.nome1,
+                nome2: Estado.nome2,
+                membros: { [Estado.usuarioEmail]: Estado.nomeUsuario },
+                viagens: [], financas: [], metas: [], checklist: [],
+                criadoEm: new Date().toISOString()
+            });
+        } catch (e) {
+            console.warn('Não foi possível criar doc inicial:', e.message);
+        }
     },
 
     salvar: async (campo) => {
