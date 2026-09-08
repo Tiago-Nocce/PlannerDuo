@@ -26,7 +26,11 @@
 
     <div class="auth-left-content">
       <div class="auth-logo">
-        <div class="auth-logo-icon">🩷</div>
+        <div class="auth-logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 21C12 21 3 14.5 3 8.5C3 5.42 5.42 3 8.5 3C10.07 3 11.5 3.72 12 4.5C12.5 3.72 13.93 3 15.5 3C18.58 3 21 5.42 21 8.5C21 14.5 12 21 12 21Z" fill="white"/>
+          </svg>
+        </div>
         <div class="auth-logo-text">Planner<span>Duo</span></div>
       </div>
 
@@ -132,18 +136,19 @@
 
         <form id="form-cadastro" novalidate>
           <div class="form-group">
-            <label class="form-label">Seu nome (Pessoa 1)</label>
+            <label class="form-label">Seu nome</label>
             <div class="input-wrap">
               <i class="fa-solid fa-user input-icon"></i>
               <input type="text" id="cad-nome1" placeholder="Ex: Tiago" required>
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Nome do(a) parceiro(a) (Pessoa 2)</label>
+            <label class="form-label">Nome do(a) parceiro(a)</label>
             <div class="input-wrap">
               <i class="fa-solid fa-heart input-icon"></i>
               <input type="text" id="cad-nome2" placeholder="Ex: Yasmin" required>
             </div>
+            <p class="form-hint">Se o casal já tem conta, preencha apenas o seu nome acima — o campo do parceiro(a) pode repetir o nome dele(a).</p>
           </div>
           <div class="form-group">
             <label class="form-label">E-mail compartilhado</label>
@@ -271,20 +276,40 @@
     const email = document.getElementById('cad-email').value.trim();
     const senha = document.getElementById('cad-senha').value;
     if (!nome1 || !nome2) return UI.mostrarToast('Informe os nomes do casal.', 'aviso');
+    if (!email || senha.length < 6) return UI.mostrarToast('E-mail e senha (mín. 6 car.) são obrigatórios.', 'aviso');
     setLoading(btn, true);
+
+    const CASAL_DOC_ID = 'tiago-yasmin'; // mesmo ID do app.js
+
     try {
+      // 1. Cria usuário no Firebase Auth
       const cred = await auth.createUserWithEmailAndPassword(email, senha);
-      const uid  = cred.user.uid;
-      const eid  = email.replace(/[^a-zA-Z0-9]/g, '');
-      await db.collection('casais').doc(eid).set({
-        uid, email, nome1, nome2,
-        viagens: [], financas: [], metas: [], checklistViagem: [],
-        criadoEm: new Date().toISOString()
-      });
-      UI.mostrarToast('Conta criada! Bem‑vindos ao PlannerDuo! 🎉', 'sucesso');
+
+      // 2. Verifica se o documento do casal já existe
+      const docRef  = db.collection('casais').doc(CASAL_DOC_ID);
+      const docSnap = await docRef.get();
+
+      if (docSnap.exists) {
+        // Documento já existe — adiciona este e-mail como membro
+        const dados = docSnap.data();
+        const membros = dados.membros || {};
+        membros[email] = nome1; // esta pessoa se chama nome1 no campo preenchido
+
+        await docRef.update({ membros });
+        UI.mostrarToast(`Conta criada! Bem‑vindo(a), ${nome1}! 🎉`, 'sucesso');
+      } else {
+        // Primeira pessoa a criar — cria o documento completo do casal
+        await docRef.set({
+          nome1, nome2,
+          membros: { [email]: nome1 },
+          viagens: [], financas: [], metas: [], checklist: [],
+          criadoEm: new Date().toISOString()
+        });
+        UI.mostrarToast(`Conta criada! Bem‑vindos ao PlannerDuo, ${nome1} & ${nome2}! 🎉`, 'sucesso');
+      }
     } catch (err) {
       const msgs = {
-        'auth/email-already-in-use': 'Este e-mail já está cadastrado.',
+        'auth/email-already-in-use': 'Este e-mail já está cadastrado. Tente fazer login.',
         'auth/weak-password': 'Senha muito fraca. Use pelo menos 6 caracteres.',
         'auth/invalid-email': 'E-mail inválido.'
       };
