@@ -597,35 +597,80 @@ const ServicoBusca = {
         const dS = Utils.slug(destino);
         let url  = '';
 
+        // Converte YYYY-MM-DD → DD-MM-YYYY (para plataformas que exigem)
+        const toddmmyyyy = (s) => { if (!s) return ''; const [a,m,d] = s.split('-'); return `${d}-${m}-${a}`; };
+
         switch (plataforma) {
+
+            /* ── Voos ────────────────────────────────────────────────
+               Google Flights: motor completo com origem + destino.
+               Azul / GOL / LATAM: não expõem deep-link público estável
+               por cidade — abrem a homepage de cada companhia para que
+               o usuário complete a busca lá. ─────────────────────── */
+
+            case 'googleflights':
+                // Motor completo: origem, destino, ida, volta, passageiros
+                url = `https://www.google.com/travel/flights/search?q=voos+de+${oE}+para+${dE}`;
+                break;
+
+            case 'azul':
+                // Abre a Azul diretamente — sem deep-link público por cidade
+                url = `https://www.voeazul.com.br`;
+                break;
+
+            case 'gol':
+                // Abre a GOL diretamente — sem deep-link público por cidade
+                url = `https://www.voegol.com.br`;
+                break;
+
+            case 'latam':
+                // LATAM aceita parâmetros origin/destination/datas na URL
+                url = `https://www.latamairlines.com/br/pt/oferta-voos`
+                    + `?origin=${oE}&destination=${dE}`
+                    + `&outbound=${dataIda || ''}&inbound=${dataVolta || ''}`
+                    + `&adt=${pax}&chd=0&inf=0&trip=RT&cabin=Y&redemption=false`;
+                break;
+
+            /* ── Hospedagem ──────────────────────────────────────────
+               Airbnb e Booking: motor completo com destino + datas. ── */
+
             case 'airbnb':
                 url = `https://www.airbnb.com.br/s/${dE}/homes?adults=${pax}`;
-                if (dataIda) url += `&checkin=${dataIda}&checkout=${dataVolta}`; break;
+                if (dataIda)   url += `&checkin=${dataIda}`;
+                if (dataVolta) url += `&checkout=${dataVolta}`;
+                break;
+
             case 'booking':
                 url = `https://www.booking.com/searchresults.pt-br.html?ss=${dE}&group_adults=${pax}`;
-                if (dataIda) url += `&checkin=${dataIda}&checkout=${dataVolta}`; break;
-            case 'googleflights':
-                url = `https://www.google.com/travel/flights?q=voos+de+${oE}+para+${dE}`;
-                if (dataIda) url += `+em+${dataIda}`; break;
-            case 'azul':
-                url = `https://www.voeazul.com.br/br/pt/home/selecao-voo?origem=${oE}&destino=${dE}&adultos=${pax}`;
-                if (dataIda) url += `&dataIda=${dataIda}&dataVolta=${dataVolta}`; break;
-            case 'gol':
-                url = `https://www.voegol.com.br/compra/busca-de-voos?from=${oE}&to=${dE}&adults=${pax}`;
-                if (dataIda) url += `&departure=${dataIda}&return=${dataVolta}`; break;
-            case 'latam':
-                url = `https://www.latamairlines.com/br/pt/ofertas-voos?origin=${oE}&destination=${dE}&adt=${pax}`;
-                if (dataIda) url += `&outbound=${dataIda}&inbound=${dataVolta}`; break;
+                if (dataIda)   url += `&checkin=${dataIda}`;
+                if (dataVolta) url += `&checkout=${dataVolta}`;
+                break;
+
+            /* ── Ônibus ──────────────────────────────────────────────
+               Buser: rota via slug, data YYYY-MM-DD.
+               ClickBus: rota via slug, data DD-MM-YYYY. ──────────── */
+
             case 'buser':
                 url = `https://www.buser.com.br/onibus/${oS}/${dS}`;
-                if (dataIda) url += `?ida=${dataIda}`; break;
+                if (dataIda) url += `?data=${dataIda}`;
+                break;
+
             case 'clickbus':
-                url = `https://www.clickbus.com.br/onibus/${oS}/${dS}`;
-                if (dataIda) url += `?departureDate=${dataIda}`; break;
+                url = `https://www.clickbus.com.br/passagem-de-onibus/${oS}/${dS}`;
+                if (dataIda) url += `?departureDate=${toddmmyyyy(dataIda)}`;
+                if (dataVolta) url += `&returnDate=${toddmmyyyy(dataVolta)}`;
+                break;
+
+            /* ── Descoberta ──────────────────────────────────────────
+               Maps e TripAdvisor: busca por nome do destino. ─────── */
+
             case 'maps':
-                url = `https://www.google.com/maps/search/${dE}`; break;
+                url = `https://www.google.com/maps/search/${dE}`;
+                break;
+
             case 'tripadvisor':
-                url = `https://www.tripadvisor.com.br/Search?q=${dE}`; break;
+                url = `https://www.tripadvisor.com.br/Search?q=${dE}`;
+                break;
         }
         if (url) window.open(url, '_blank');
     }
