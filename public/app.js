@@ -18,30 +18,22 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
-// ── ID fixo do documento compartilhado do casal ──────────────
-// Ambos os usuários sempre leem/escrevem neste mesmo documento.
-const CASAL_DOC_ID = 'tiago-yasmin';
-
 // ── Estado Global ─────────────────────────────────────────────
+// O identificador do Espaço_Casal (casalId) é resolvido dinamicamente
+// a partir da identidade do Usuário logado (ver Auth.resolverCasalId).
 const Estado = {
     usuarioUid:  null,
     usuarioEmail: null,
+    usuarioNome: null,   // displayName do Google
     nomeUsuario: null,   // nome da pessoa logada (lido do doc)
-    nome1: 'Tiago',      // fallback enquanto não carrega
-    nome2: 'Yasmin',
+    casalId: null,       // resolvido dinamicamente (Decisão D1)
+    nome1: null,         // sem fallback fixo (null até carregar)
+    nome2: null,
     viagens:    [],
     financas:   [],
     metas:      [],
     checklist:  [],
     unsubscribe: null    // listener ativo do Firestore
-};
-
-// ── Mapa de e-mails autorizados → pessoa ─────────────────────
-// Adicione aqui os e-mails de vocês dois.
-// Qualquer outro e-mail que tentar acessar será bloqueado.
-const USUARIOS_AUTORIZADOS = {
-    // 'email@exemplo.com': 'NomeDaPessoa'
-    // Será preenchido dinamicamente via Firestore (campo 'membros')
 };
 
 // ============================================================
@@ -236,8 +228,18 @@ const Auth = {
                 }
 
                 if (isApp) {
-                    // Entra direto sem esperar Firestore — carrega dados em paralelo
-                    Auth._entrarNoApp(user);
+                    Estado.usuarioNome = user.displayName || null;
+                    // Resolve o casalId ANTES de entrar no app; se falhar, cai no
+                    // último casalId conhecido (localStorage) para não travar.
+                    Auth.resolverCasalId(user)
+                        .catch((err) => {
+                            console.warn('Falha ao resolver casalId:', err.code, err.message);
+                            Estado.casalId = localStorage.getItem('pd-casalId') || user.uid;
+                        })
+                        .finally(() => {
+                            localStorage.setItem('pd-casalId', Estado.casalId);
+                            Auth._entrarNoApp(user);
+                        });
                 }
             } else {
                 if (isApp) {
@@ -296,30 +298,42 @@ const Auth = {
 
     _bloquear: () => {
         auth.signOut();
-        alert('Acesso não autorizado. Este sistema é exclusivo para Tiago & Yasmin.');
+        alert('Acesso não autorizado.');
         window.location.href = 'auth.html';
     },
 
-    _criarDocCasal: async (user) => {
-        // Primeiro acesso — cria o documento compartilhado do casal.
-        // O nome da pessoa 1 vem do e-mail (pode ser atualizado depois).
-        const nomeInferido = user.displayName || user.email.split('@')[0];
-        Estado.nomeUsuario = nomeInferido;
-        Estado.nome1 = nomeInferido;
-        Estado.nome2 = 'Parceiro(a)';
-        await db.collection('casais').doc(CASAL_DOC_ID).set({
-            nome1: Estado.nome1,
-            nome2: Estado.nome2,
-            membros: { [user.email]: Estado.nome1 },
-            viagens: [], financas: [], metas: [], checklist: [],
-            criadoEm: new Date().toISOString()
-        });
+    // Resolve o casalId do Usuário autenticado (Decisão D1). Implementação
+    // ASSÍNCRONA sobre o Firestore v8 que replica a lógica pura de core.js:
+    //   - `casais/{uid}` não existe   -> cria novo Espaço_Casal, casalId = uid;
+    //   - tem `casalIdRef` (ponteiro)  -> casalId = casalIdRef;
+    //   - caso contrário               -> casalId = uid (espaço próprio).
+    // Grava o resultado em Estado.casalId e retorna-o.
+    // Requirements: 2.1, 2.2, 2.3, 2.6, 6.2
+    resolverCasalId: async (user) => {
+        const ref  = db.collection('casais').doc(user.uid);
+        const snap = await ref.get();
+        if (!snap.exists) {
+            const nome = user.displayName || PlannerCore.nomePadrao(user.email);
+            await ref.set({
+                membros: { [user.email]: nome },
+                nome1: nome,
+                nome2: null,
+                viagens: [], financas: [], metas: [], checklist: [],
+                criadoEm: new Date().toISOString()
+            });
+            Estado.casalId = user.uid;
+            return user.uid;
+        }
+        const data = snap.data();
+        Estado.casalId = data.casalIdRef || user.uid;
+        return Estado.casalId;
     },
 
     logout: () => {
         if (!confirm('Deseja encerrar a sessão?')) return;
         if (Estado.unsubscribe) Estado.unsubscribe();
-        localStorage.removeItem('pd-cache');
+        try { localStorage.removeItem(DB.chaveCache()); } catch {}
+        localStorage.removeItem('pd-casalId');
         auth.signOut().then(() => window.location.href = 'auth.html');
     }
 };
@@ -328,9 +342,12 @@ const Auth = {
 // BANCO DE DADOS (FIRESTORE)
 // ============================================================
 const DB = {
+    // Chave de Cache_Local derivada do casalId atual (Req 2.6, 7.1).
+    chaveCache: () => PlannerCore.chaveCache(Estado.casalId),
+
     carregarCache: () => {
         try {
-            const raw = localStorage.getItem('pd-cache');
+            const raw = localStorage.getItem(DB.chaveCache());
             if (!raw) return;
             const dados = JSON.parse(raw);
             Estado.viagens   = dados.viagens   || [];
@@ -344,11 +361,10 @@ const DB = {
 
     ouvirNuvem: () => {
         if (Estado.unsubscribe) Estado.unsubscribe();
-        Estado.unsubscribe = db.collection('casais').doc(CASAL_DOC_ID)
+        Estado.unsubscribe = db.collection('casais').doc(Estado.casalId)
             .onSnapshot((doc) => {
                 if (!doc.exists) {
-                    // Documento não existe — cria automaticamente
-                    DB._criarDocInicial();
+                    // Documento ainda não propagou — segue com o cache local.
                     return;
                 }
                 const dados = doc.data();
@@ -369,7 +385,7 @@ const DB = {
                 }
                 if (dados.nome2) Estado.nome2 = dados.nome2;
                 UI.atualizarNomes();
-                localStorage.setItem('pd-cache', JSON.stringify(dados));
+                try { localStorage.setItem(DB.chaveCache(), JSON.stringify(dados)); } catch {}
                 Render.tudo();
             }, (err) => {
                 console.warn('Firestore onSnapshot erro:', err.code, err.message);
@@ -377,23 +393,9 @@ const DB = {
             });
     },
 
-    _criarDocInicial: async () => {
-        try {
-            await db.collection('casais').doc(CASAL_DOC_ID).set({
-                nome1: Estado.nome1,
-                nome2: Estado.nome2,
-                membros: { [Estado.usuarioEmail]: Estado.nomeUsuario },
-                viagens: [], financas: [], metas: [], checklist: [],
-                criadoEm: new Date().toISOString()
-            });
-        } catch (e) {
-            console.warn('Não foi possível criar doc inicial:', e.message);
-        }
-    },
-
     salvar: async (campo) => {
         try {
-            await db.collection('casais').doc(CASAL_DOC_ID)
+            await db.collection('casais').doc(Estado.casalId)
                 .set({ [campo]: Estado[campo] }, { merge: true });
         } catch (err) {
             UI.toast('Erro ao salvar', err.message, 'erro');
@@ -404,10 +406,120 @@ const DB = {
         const payload = {};
         campos.forEach(c => payload[c] = Estado[c]);
         try {
-            await db.collection('casais').doc(CASAL_DOC_ID).set(payload, { merge: true });
+            await db.collection('casais').doc(Estado.casalId).set(payload, { merge: true });
         } catch (err) {
             UI.toast('Erro ao salvar', err.message, 'erro');
         }
+    }
+};
+
+// ============================================================
+// CONVITES — ingresso de parceiro(a) no Espaço_Casal
+// ============================================================
+// Reutiliza a geração/validação pura de core.js, mas com I/O assíncrono
+// no Firestore v8 (as funções puras são síncronas e não podem ser usadas
+// diretamente aqui).
+const Convites = {
+    // Gera um convite para o Espaço_Casal atual, grava convites/{codigo}
+    // com validade de 72h e exibe o código no modal. Requirements: 4.1, 4.2, 4.3
+    criar: async () => {
+        const codigo = PlannerCore.gerarCodigo();
+        const agora  = Date.now();
+        try {
+            await db.collection('convites').doc(codigo).set({
+                casalId: Estado.casalId,
+                criadoPor: Estado.usuarioEmail,
+                criadoEm: new Date(agora).toISOString(),
+                expiraEm: new Date(agora + 72 * 60 * 60 * 1000).toISOString()
+            });
+        } catch (err) {
+            UI.toast('Erro ao gerar convite', err.message, 'erro');
+            return null;
+        }
+        const campo = document.getElementById('convite-codigo-gerado');
+        if (campo) campo.textContent = codigo;
+        const validade = document.getElementById('convite-validade');
+        if (validade) validade.textContent = 'Válido até ' + Utils.data(
+            new Date(agora + 72 * 60 * 60 * 1000).toISOString().slice(0, 10)
+        );
+        UI.toast('Convite gerado!', 'Compartilhe o código com seu parceiro(a).', 'sucesso');
+        return codigo;
+    },
+
+    // Valida e processa o aceite de um convite (ordem de curto-circuito:
+    // invalido -> expirou -> cheio -> ja_membro -> sucesso). Requirements: 4.4-4.9
+    aceitar: async (codigo) => {
+        const user = auth.currentUser;
+        if (!user) return;
+        const cod = (codigo || '').trim().toUpperCase();
+        const mensagens = {
+            invalido:  'Código inválido',
+            expirou:   'Código expirou',
+            cheio:     'Espaço do casal está cheio',
+            ja_membro: 'Você já é membro'
+        };
+        try {
+            // 1. Existência.
+            const conviteSnap = await db.collection('convites').doc(cod).get();
+            if (!conviteSnap.exists) {
+                UI.toast(mensagens.invalido, '', 'erro');
+                return;
+            }
+            const convite = conviteSnap.data();
+
+            // 2. Expiração.
+            if (new Date(convite.expiraEm).getTime() < Date.now()) {
+                UI.toast(mensagens.expirou, '', 'erro');
+                return;
+            }
+
+            // 3. Lotação do Espaço_Casal (máx. 2 membros).
+            const espacoSnap = await db.collection('casais').doc(convite.casalId).get();
+            const espaco  = espacoSnap.exists ? espacoSnap.data() : {};
+            const membros = espaco.membros || {};
+            if (Object.keys(membros).length >= 2) {
+                UI.toast(mensagens.cheio, '', 'erro');
+                return;
+            }
+
+            // 4. Já é membro.
+            if (membros[user.email]) {
+                UI.toast(mensagens.ja_membro, '', 'aviso');
+                return;
+            }
+
+            // 5. Sucesso: registra o membro no espaço e grava o ponteiro.
+            const nome = user.displayName || PlannerCore.nomePadrao(user.email);
+            const membrosAtualizado = Object.assign({}, membros, { [user.email]: nome });
+            await db.collection('casais').doc(convite.casalId)
+                .set({ membros: membrosAtualizado }, { merge: true });
+            await db.collection('casais').doc(user.uid)
+                .set({ casalIdRef: convite.casalId });
+
+            // Re-resolve o casalId e recarrega os dados do novo espaço.
+            Estado.casalId = convite.casalId;
+            localStorage.setItem('pd-casalId', Estado.casalId);
+            UI.fecharModal('modal-convite-aceitar');
+            UI.toast('Bem-vindo(a) ao espaço!', 'Vocês agora compartilham os dados.', 'sucesso');
+            DB.carregarCache();
+            DB.ouvirNuvem();
+        } catch (err) {
+            UI.toast('Erro ao aceitar convite', err.message, 'erro');
+        }
+    },
+
+    abrirGerar: () => {
+        const campo = document.getElementById('convite-codigo-gerado');
+        if (campo) campo.textContent = '—';
+        const validade = document.getElementById('convite-validade');
+        if (validade) validade.textContent = '';
+        UI.abrirModal('modal-convite-gerar');
+    },
+
+    abrirAceitar: () => {
+        const input = document.getElementById('convite-codigo-input');
+        if (input) input.value = '';
+        UI.abrirModal('modal-convite-aceitar');
     }
 };
 
