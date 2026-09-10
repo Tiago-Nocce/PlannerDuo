@@ -76,7 +76,7 @@
       <!-- LOGIN -->
       <div id="secao-login" class="auth-section ativa">
         <div class="auth-form-title">Bem‑vindo de volta! 👋</div>
-        <p class="auth-form-sub">Entre com sua conta para acessar o painel do casal.</p>
+        <p class="auth-form-sub" id="login-sub">Entre com sua conta para acessar o painel do casal.</p>
 
         <form id="form-login" novalidate>
           <div class="form-group">
@@ -122,6 +122,7 @@
 
         <p class="auth-switch">
           Primeiro acesso? <a href="#" onclick="trocarSecao('cadastro')">Criar conta do casal</a>
+          &nbsp;·&nbsp; <a href="#" onclick="auth.signOut()" style="color:var(--text-muted);font-size:.8rem">Trocar conta</a>
         </p>
       </div>
 
@@ -225,9 +226,16 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
-// Se já logado, vai direto pro app
+// Se já logado, vai direto pro app — mas mostra aviso visual brevemente
+let _redirecionando = false;
 auth.onAuthStateChanged((user) => {
-  if (user) window.location.href = 'app.html';
+  if (user && !_redirecionando) {
+    _redirecionando = true;
+    // Mostra aviso em vez de redirecionar silenciosamente
+    const sub = document.getElementById('login-sub');
+    if (sub) sub.innerHTML = `<span style="color:var(--brand-blue);font-weight:600"><i class="fa-solid fa-spinner fa-spin"></i> Sessão ativa, entrando...</span>`;
+    setTimeout(() => { window.location.href = 'app.html'; }, 800);
+  }
 });
 
 // ── Helpers UI ────────────────────────────────
@@ -384,17 +392,34 @@ document.getElementById('form-reset').addEventListener('submit', async (e) => {
 });
 
 // ── GOOGLE ────────────────────────────────────
+// Usa signInWithRedirect — funciona em localhost e produção sem bloqueio de popup
 async function loginGoogle() {
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
-    await auth.signInWithPopup(provider);
-    // onAuthStateChanged vai redirecionar
+    provider.setCustomParameters({ prompt: 'select_account' });
+    auth.languageCode = 'pt-BR';
+    await auth.signInWithRedirect(provider);
   } catch (err) {
-    if (err.code !== 'auth/popup-closed-by-user') {
-      toast(erroFirebase(err.code), 'erro');
-    }
+    toast(erroFirebase(err.code), 'erro');
   }
 }
+
+// Processa o resultado do redirect do Google ao voltar para a página
+auth.getRedirectResult().then((result) => {
+  if (result && result.user) {
+    // Login Google bem-sucedido — onAuthStateChanged vai redirecionar
+  }
+}).catch((err) => {
+  if (err.code && err.code !== 'auth/popup-closed-by-user') {
+    const msgs = {
+      'auth/account-exists-with-different-credential': 'Este e-mail já está cadastrado com outro método. Use e-mail e senha.',
+      'auth/cancelled-popup-request': null, // silencioso
+      'auth/unauthorized-domain': 'Domínio não autorizado no Firebase. Adicione este domínio em Authentication → Authorized domains no console Firebase.',
+    };
+    const msg = msgs[err.code];
+    if (msg !== null) toast(msg || erroFirebase(err.code), 'erro');
+  }
+});
 </script>
 </body>
 </html>
