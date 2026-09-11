@@ -56,7 +56,7 @@
     </div>
 
     <div class="sidebar-user" id="sidebar-user-info">
-      <div class="sidebar-avatar" id="sidebar-avatar">T</div>
+      <div class="sidebar-avatar" id="sidebar-avatar">?</div>
       <div class="sidebar-user-info">
         <div class="sidebar-user-name" id="sidebar-user-name">Carregando...</div>
         <div class="sidebar-user-status">Online</div>
@@ -94,6 +94,14 @@
         <span class="nav-icon"><i class="fa-solid fa-file-chart-column"></i></span>
         Relatórios
       </a>
+      <a class="nav-item" onclick="Convites.abrirGerar()" style="cursor:pointer">
+        <span class="nav-icon"><i class="fa-solid fa-user-plus"></i></span>
+        Convidar parceiro(a)
+      </a>
+      <a class="nav-item" onclick="Convites.abrirAceitar()" style="cursor:pointer">
+        <span class="nav-icon"><i class="fa-solid fa-right-to-bracket"></i></span>
+        Entrar com código
+      </a>
     </nav>
 
     <div class="sidebar-footer">
@@ -128,6 +136,12 @@
         <div class="welcome-hearts" style="margin-bottom:8px">🩷</div>
         <h2 id="welcome-msg">Olá, casal!</h2>
         <p id="welcome-sub">Aqui está o resumo financeiro e de viagens de vocês.</p>
+      </div>
+
+      <!-- Panorama do Casal -->
+      <div class="card mb-24" style="padding:22px">
+        <div class="chart-title mb-16"><i class="fa-solid fa-compass"></i> Panorama do Casal</div>
+        <div id="panorama-container" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px"></div>
       </div>
 
       <!-- Stats Row 1 -->
@@ -189,7 +203,7 @@
       <!-- Acerto de Contas Visual -->
       <div class="split-vis" id="split-visual">
         <div class="split-person">
-          <div class="split-avatar" id="split-av1" style="background:linear-gradient(135deg,#2563eb,#4f46e5)">T</div>
+          <div class="split-avatar" id="split-av1" style="background:linear-gradient(135deg,#2563eb,#4f46e5)">?</div>
           <div class="split-name" id="split-nome1">Pessoa 1</div>
           <div class="split-amount" id="split-valor1">R$ 0</div>
           <div class="split-pct" id="split-pct1">0% do total</div>
@@ -198,7 +212,7 @@
           <div class="split-vs-icon"><i class="fa-solid fa-right-left"></i></div>
         </div>
         <div class="split-person">
-          <div class="split-avatar" id="split-av2" style="background:linear-gradient(135deg,#f97316,#f43f5e)">Y</div>
+          <div class="split-avatar" id="split-av2" style="background:linear-gradient(135deg,#f97316,#f43f5e)">?</div>
           <div class="split-name" id="split-nome2">Pessoa 2</div>
           <div class="split-amount" id="split-valor2">R$ 0</div>
           <div class="split-pct" id="split-pct2">0% do total</div>
@@ -265,6 +279,17 @@
             <canvas id="chart-cat-fin"></canvas>
           </div>
         </div>
+      </div>
+
+      <!-- Orçamentos mensais por categoria -->
+      <div class="card mb-24" style="padding:22px">
+        <div class="flex-between mb-16" style="flex-wrap:wrap;gap:10px">
+          <div class="chart-title" style="margin:0"><i class="fa-solid fa-gauge-high"></i> Orçamentos Mensais</div>
+          <button class="btn btn-ghost btn-sm" onclick="UI.abrirModal('modal-orcamento')">
+            <i class="fa-solid fa-plus"></i> Definir Limite
+          </button>
+        </div>
+        <div id="orcamentos-container"></div>
       </div>
 
       <!-- Filtros -->
@@ -387,6 +412,8 @@
           <button class="platform-btn pb-azul"     onclick="ServicoBusca.redirecionar('azul')"><span class="platform-icon">💙</span>Azul</button>
           <button class="platform-btn pb-gol"      onclick="ServicoBusca.redirecionar('gol')"><span class="platform-icon">🟠</span>GOL</button>
           <button class="platform-btn pb-latam"    onclick="ServicoBusca.redirecionar('latam')"><span class="platform-icon">❤️</span>LATAM</button>
+          <button class="platform-btn pb-kayak"     onclick="ServicoBusca.redirecionar('kayak')"><span class="platform-icon">🧭</span>Kayak</button>
+          <button class="platform-btn pb-skyscanner" onclick="ServicoBusca.redirecionar('skyscanner')"><span class="platform-icon">🔭</span>Skyscanner</button>
           <button class="platform-btn pb-airbnb"   onclick="ServicoBusca.redirecionar('airbnb')"><span class="platform-icon">🏠</span>Airbnb</button>
           <button class="platform-btn pb-booking"  onclick="ServicoBusca.redirecionar('booking')"><span class="platform-icon">🏨</span>Booking</button>
           <button class="platform-btn pb-buser"    onclick="ServicoBusca.redirecionar('buser')"><span class="platform-icon">🚌</span>Buser</button>
@@ -394,6 +421,9 @@
           <button class="platform-btn pb-maps"     onclick="ServicoBusca.redirecionar('maps')"><span class="platform-icon">🗺️</span>Google Maps</button>
           <button class="platform-btn pb-tripadv"  onclick="ServicoBusca.redirecionar('tripadvisor')"><span class="platform-icon">🦉</span>TripAdvisor</button>
         </div>
+
+        <!-- Histórico de buscas -->
+        <div id="busca-historico"></div>
       </div>
 
       <!-- Filtro e Cards -->
@@ -693,6 +723,36 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label">Vincular à Viagem (opcional)</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-plane input-icon"></i>
+            <select id="fin-viagem">
+              <option value="">Nenhuma</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Recorrência</label>
+            <div class="input-wrap">
+              <i class="fa-solid fa-repeat input-icon"></i>
+              <select id="fin-recorrente">
+                <option value="">Não recorrente</option>
+                <option value="mensal">🔁 Mensal</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Parcelas</label>
+            <div class="input-wrap">
+              <i class="fa-solid fa-credit-card input-icon"></i>
+              <input type="number" id="fin-parcelas" value="1" min="1" step="1">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">Observação (opcional)</label>
           <textarea id="fin-obs" placeholder="Detalhes adicionais..." rows="2"></textarea>
         </div>
@@ -929,6 +989,82 @@
   </div>
 </div>
 
+<!-- ── Modal: Cofrinho da Viagem ─────────────────── -->
+<div class="modal-overlay" id="modal-viagem-cofrinho">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Cofrinho da Viagem 🐷</div>
+        <div class="modal-subtitle" id="cofrinho-viagem-nome">Viagem</div>
+      </div>
+      <button class="modal-close" onclick="UI.fecharModal('modal-viagem-cofrinho')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Valor a guardar (R$)</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-brazilian-real-sign input-icon"></i>
+          <input type="number" id="cofrinho-valor" placeholder="100,00" min="0.01" step="0.01">
+        </div>
+      </div>
+      <input type="hidden" id="cofrinho-viagem-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="UI.fecharModal('modal-viagem-cofrinho')">Cancelar</button>
+      <button class="btn btn-success" onclick="Controladores.guardarViagem()">
+        <i class="fa-solid fa-piggy-bank"></i> Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Orçamento por Categoria ────────────── -->
+<div class="modal-overlay" id="modal-orcamento">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Limite Mensal 🎯</div>
+        <div class="modal-subtitle">Defina um teto de gastos por categoria</div>
+      </div>
+      <button class="modal-close" onclick="UI.fecharModal('modal-orcamento')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Categoria</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-folder input-icon"></i>
+          <select id="orc-categoria">
+            <option value="alimentacao">🍔 Alimentação</option>
+            <option value="transporte">🚗 Transporte</option>
+            <option value="moradia">🏠 Moradia</option>
+            <option value="lazer">🎟️ Lazer</option>
+            <option value="saude">💊 Saúde</option>
+            <option value="viagem">✈️ Viagem</option>
+            <option value="educacao">📚 Educação</option>
+            <option value="vestuario">👗 Vestuário</option>
+            <option value="salario">💼 Salário</option>
+            <option value="investimento">📈 Investimento</option>
+            <option value="outros">🏷️ Outros</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Limite mensal (R$)</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-brazilian-real-sign input-icon"></i>
+          <input type="number" id="orc-valor" placeholder="1000,00" min="0" step="0.01">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="UI.fecharModal('modal-orcamento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="Orcamentos.definir()">
+        <i class="fa-solid fa-check"></i> Definir Limite
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Modal: Item do Checklist ──────────────────── -->
 <div class="modal-overlay" id="modal-checklist-item">
   <div class="modal" style="max-width:440px">
@@ -1046,11 +1182,77 @@
           </select>
         </div>
       </div>
+      <div class="form-group">
+        <label class="form-label">Vincular à Viagem (opcional)</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-plane input-icon"></i>
+          <select id="edit-fin-viagem">
+            <option value="">Nenhuma</option>
+          </select>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="UI.fecharModal('modal-editar-financa')">Cancelar</button>
       <button class="btn btn-primary" onclick="Controladores.salvarEdicaoFinanca()">
         <i class="fa-solid fa-check"></i> Salvar Alterações
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Gerar Convite ──────────────────────── -->
+<div class="modal-overlay" id="modal-convite-gerar">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Convidar parceiro(a) 💑</div>
+        <div class="modal-subtitle">Gere um código e compartilhe com quem vai dividir o espaço</div>
+      </div>
+      <button class="modal-close" onclick="UI.fecharModal('modal-convite-gerar')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <button class="btn btn-primary" style="width:100%" onclick="Convites.criar()">
+        <i class="fa-solid fa-key"></i> Gerar código
+      </button>
+      <div id="convite-codigo-gerado" style="text-align:center;font-family:monospace;font-size:2rem;letter-spacing:0.3rem;font-weight:700;margin:1.25rem 0 0.25rem">—</div>
+      <div id="convite-validade" style="text-align:center;font-size:0.8rem;color:var(--text-muted)"></div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:1rem" onclick="navigator.clipboard.writeText(document.getElementById('convite-codigo-gerado').textContent); UI.toast('Código copiado!','','sucesso')">
+        <i class="fa-solid fa-copy"></i> Copiar
+      </button>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-top:1rem;line-height:1.5">
+        O código expira em 72 horas. Seu parceiro(a) deve entrar com Google e usar "Entrar com código".
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="UI.fecharModal('modal-convite-gerar')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Aceitar Convite ────────────────────── -->
+<div class="modal-overlay" id="modal-convite-aceitar">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Entrar em um espaço 🔑</div>
+        <div class="modal-subtitle">Digite o código que seu parceiro(a) compartilhou</div>
+      </div>
+      <button class="modal-close" onclick="UI.fecharModal('modal-convite-aceitar')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Código do convite</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-key input-icon"></i>
+          <input type="text" id="convite-codigo-input" maxlength="8" placeholder="Ex: A1B2C3D4" style="text-transform:uppercase;letter-spacing:0.25rem;text-align:center;font-size:1.4rem;font-family:monospace">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="UI.fecharModal('modal-convite-aceitar')">Cancelar</button>
+      <button class="btn btn-primary" onclick="Convites.aceitar(document.getElementById('convite-codigo-input').value)">
+        <i class="fa-solid fa-right-to-bracket"></i> Entrar no espaço
       </button>
     </div>
   </div>

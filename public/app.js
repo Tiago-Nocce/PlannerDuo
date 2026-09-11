@@ -33,6 +33,8 @@ const Estado = {
     financas:   [],
     metas:      [],
     checklist:  [],
+    orcamentos: {},      // map categoria -> valor limite mensal
+    historicoBuscas: [], // últimas buscas de viagem (max 8, localStorage)
     unsubscribe: null    // listener ativo do Firestore
 };
 
@@ -96,6 +98,35 @@ const Utils = {
         if (/(roupa|sapato|calca|camisa|vestido|tenis)/.test(d)) return 'vestuario';
         if (/(salario|pagamento|freelance|renda|comissao)/.test(d)) return 'salario';
         return 'outros';
+    },
+
+    // ── Vínculo despesa ↔ viagem ─────────────────────────────
+    // Soma todas as despesas (tipo==='despesa') vinculadas a uma viagem.
+    gastosDaViagem: (viagemId) => {
+        if (!viagemId) return 0;
+        return Estado.financas
+            .filter(f => f.tipo === 'despesa' && f.viagemId === viagemId)
+            .reduce((s, f) => s + (f.valor || 0), 0);
+    },
+
+    // ── Motor de busca: códigos IATA ─────────────────────────
+    // Mapa de cidades brasileiras comuns → código IATA do aeroporto.
+    IATA: {
+        'belo horizonte':'CNF','sao paulo':'GRU','rio de janeiro':'GIG','brasilia':'BSB',
+        'salvador':'SSA','recife':'REC','fortaleza':'FOR','porto alegre':'POA',
+        'curitiba':'CWB','florianopolis':'FLN','natal':'NAT','maceio':'MCZ',
+        'vitoria':'VIX','cuiaba':'CGB','goiania':'GYN','belem':'BEL','manaus':'MAO',
+        'joao pessoa':'JPA','aracaju':'AJU','campo grande':'CGR','sao luis':'SLZ',
+        'teresina':'THE','palmas':'PMW','porto seguro':'BPS','foz do iguacu':'IGU',
+        'navegantes':'NVT','cabo frio':'CFB'
+    },
+
+    // Normaliza a cidade (minúsculas, sem acento) e retorna o IATA ou null.
+    iata: (cidade) => {
+        if (!cidade) return null;
+        const chave = cidade.trim().toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return Utils.IATA[chave] || null;
     }
 };
 
@@ -265,6 +296,13 @@ const Auth = {
         // Carregar cache local primeiro (offline-first)
         DB.carregarCache();
 
+        // Processar despesas recorrentes (gera cópias do mês atual)
+        Controladores.processarRecorrentes();
+
+        // Popular selects de viagem e histórico de buscas
+        Render.popularSelectViagens();
+        ServicoBusca.carregarHistorico();
+
         // Ouvir Firestore em tempo real
         DB.ouvirNuvem();
 
@@ -350,10 +388,11 @@ const DB = {
             const raw = localStorage.getItem(DB.chaveCache());
             if (!raw) return;
             const dados = JSON.parse(raw);
-            Estado.viagens   = dados.viagens   || [];
-            Estado.financas  = dados.financas  || [];
-            Estado.metas     = dados.metas     || [];
-            Estado.checklist = dados.checklist || [];
+            Estado.viagens    = dados.viagens    || [];
+            Estado.financas   = dados.financas   || [];
+            Estado.metas      = dados.metas      || [];
+            Estado.checklist  = dados.checklist  || [];
+            Estado.orcamentos = dados.orcamentos || {};
             if (dados.nome1) Estado.nome1 = dados.nome1;
             if (dados.nome2) Estado.nome2 = dados.nome2;
         } catch {}
@@ -368,10 +407,11 @@ const DB = {
                     return;
                 }
                 const dados = doc.data();
-                Estado.viagens   = dados.viagens   || [];
-                Estado.financas  = dados.financas  || [];
-                Estado.metas     = dados.metas     || [];
-                Estado.checklist = dados.checklist || [];
+                Estado.viagens    = dados.viagens    || [];
+                Estado.financas   = dados.financas   || [];
+                Estado.metas      = dados.metas      || [];
+                Estado.checklist  = dados.checklist  || [];
+                Estado.orcamentos = dados.orcamentos || {};
                 if (dados.nome1) {
                     Estado.nome1 = dados.nome1;
                     // Atualiza nome do usuário logado pelo campo membros
@@ -537,15 +577,86 @@ const Controladores = {
         const data  = document.getElementById('fin-data').value;
         const cat   = document.getElementById('fin-categoria').value || Utils.inferirCat(desc);
         const obs   = document.getElementById('fin-obs')?.value.trim() || '';
+        const viagemId   = document.getElementById('fin-viagem')?.value || '';
+        const recorrente = document.getElementById('fin-recorrente')?.value || '';
+        const parcelas   = parseInt(document.getElementById('fin-parcelas')?.value) || 1;
 
         if (!desc || !valor || !data) return UI.toast('Preencha todos os campos', '', 'aviso');
 
-        Estado.financas.push({ id: Utils.id(), tipo, resp, desc, valor, data, cat, obs });
+        // ── Parcelamento: divide o valor em N parcelas mensais ──
+        if (parcelas > 1) {
+            const grupoId    = Utils.id();
+            const valorParc  = Math.round((valor / parcelas) * 100) / 100;
+            const [ay, am, ad] = data.split('-').map(Number);
+            for (let i = 0; i < parcelas; i++) {
+                const d = new Date(ay, (am - 1) + i, ad);
+                const dataParc = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                Estado.financas.push({
+                    id: Utils.id(), tipo, resp,
+                    desc: `${desc} (${i+1}/${parcelas})`,
+                    valor: valorParc, data: dataParc, cat, obs,
+                    viagemId, recorrente: '', geradaDe: '',
+                    parcela: { atual: i+1, total: parcelas, grupoId }
+                });
+            }
+            DB.salvar('financas');
+            UI.fecharModal('modal-financa');
+            UI.toast('Compra parcelada registrada!', `${Utils.catInfo(cat).emoji} ${desc} — ${parcelas}x de ${Utils.moeda(valorParc)}`);
+            Render.financas();
+            Render.dashboard();
+            return;
+        }
+
+        Estado.financas.push({ id: Utils.id(), tipo, resp, desc, valor, data, cat, obs, viagemId, recorrente, parcela: null, geradaDe: '' });
         DB.salvar('financas');
         UI.fecharModal('modal-financa');
         UI.toast('Transação registrada!', `${Utils.catInfo(cat).emoji} ${desc} — ${Utils.moeda(valor)}`);
         Render.financas();
         Render.dashboard();
+    },
+
+    // ── Despesas recorrentes: gera cópias no mês atual ───────
+    // Para cada despesa recorrente mensal cujo mês de referência já
+    // passou, cria automaticamente uma cópia no mês atual (evitando
+    // duplicar via campo geradaDe).
+    processarRecorrentes: () => {
+        const hoje    = new Date();
+        const mesAtual = hoje.getMonth(), anoAtual = hoje.getFullYear();
+        const originais = Estado.financas.filter(f =>
+            f.recorrente === 'mensal' && !f.geradaDe
+        );
+        let criou = false;
+        originais.forEach(orig => {
+            const dOrig = new Date(orig.data + 'T12:00:00');
+            // Só processa se a recorrente original é de um mês anterior
+            const mesRefOrig = dOrig.getFullYear() * 12 + dOrig.getMonth();
+            const mesRefAtual = anoAtual * 12 + mesAtual;
+            if (mesRefOrig >= mesRefAtual) return;
+
+            // Já existe cópia deste original no mês atual?
+            const existe = Estado.financas.some(f => {
+                if (f.geradaDe !== orig.id) return false;
+                const d = new Date(f.data + 'T12:00:00');
+                return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+            });
+            if (existe) return;
+
+            // Cria a cópia no mês atual, preservando o dia da recorrente.
+            const dia = Math.min(dOrig.getDate(), new Date(anoAtual, mesAtual + 1, 0).getDate());
+            const dataNova = `${anoAtual}-${String(mesAtual+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+            Estado.financas.push({
+                id: Utils.id(),
+                tipo: orig.tipo, resp: orig.resp, desc: orig.desc,
+                valor: orig.valor, data: dataNova, cat: orig.cat, obs: orig.obs || '',
+                viagemId: orig.viagemId || '', recorrente: 'mensal',
+                parcela: null, geradaDe: orig.id
+            });
+            criou = true;
+        });
+        if (criou) {
+            DB.salvar('financas');
+            UI.toast('Despesas recorrentes lançadas', 'Copiadas para o mês atual.', 'info');
+        }
     },
 
     editarFinanca: (id) => {
@@ -558,6 +669,8 @@ const Controladores = {
         document.getElementById('edit-fin-valor').value       = f.valor;
         document.getElementById('edit-fin-data').value        = f.data;
         document.getElementById('edit-fin-categoria').value   = f.cat || 'outros';
+        const selViagem = document.getElementById('edit-fin-viagem');
+        if (selViagem) selViagem.value = f.viagemId || '';
         UI.abrirModal('modal-editar-financa');
     },
 
@@ -573,10 +686,13 @@ const Controladores = {
             valor: parseFloat(document.getElementById('edit-fin-valor').value),
             data:  document.getElementById('edit-fin-data').value,
             cat:   document.getElementById('edit-fin-categoria').value,
+            viagemId: document.getElementById('edit-fin-viagem')?.value || '',
         };
         DB.salvar('financas');
         UI.fecharModal('modal-editar-financa');
         UI.toast('Transação atualizada!', '', 'sucesso');
+        Render.financas();
+        Render.dashboard();
     },
 
     // ── Viagens ─────────────────────────────────────────────
@@ -592,10 +708,41 @@ const Controladores = {
 
         if (!destino || !ida || !volta) return UI.toast('Preencha destino e datas', '', 'aviso');
 
-        Estado.viagens.push({ id: Utils.id(), destino, emoji, ida, volta, orcamento, tipo, link, notas, gastos: 0 });
+        Estado.viagens.push({ id: Utils.id(), destino, emoji, ida, volta, orcamento, tipo, link, notas, gastos: 0, guardado: 0 });
         DB.salvar('viagens');
         UI.fecharModal('modal-viagem');
         UI.toast('Viagem salva!', `${emoji} ${destino}`, 'sucesso');
+        Render.viagens();
+        Render.popularSelectViagens();
+    },
+
+    // ── Cofrinho de viagem (economia) ────────────────────────
+    abrirCofrinhoViagem: (id) => {
+        const v = Estado.viagens.find(v => v.id === id);
+        if (!v) return;
+        document.getElementById('cofrinho-viagem-id').value = id;
+        document.getElementById('cofrinho-viagem-nome').textContent = `${v.emoji || '✈️'} ${v.destino}`;
+        document.getElementById('cofrinho-valor').value = '';
+        UI.abrirModal('modal-viagem-cofrinho');
+    },
+
+    guardarViagem: () => {
+        const id    = document.getElementById('cofrinho-viagem-id').value;
+        const valor = parseFloat(document.getElementById('cofrinho-valor').value);
+        if (!valor || valor <= 0) return UI.toast('Informe um valor válido', '', 'aviso');
+        const idx = Estado.viagens.findIndex(v => v.id === id);
+        if (idx === -1) return;
+        Estado.viagens[idx].guardado = (Estado.viagens[idx].guardado || 0) + valor;
+        const v = Estado.viagens[idx];
+        if (v.orcamento > 0 && v.guardado >= v.orcamento) {
+            UI.toast('🎉 Orçamento alcançado!', `${v.destino} — já dá pra viajar!`, 'sucesso');
+        } else {
+            UI.toast('Guardado para a viagem!', `+${Utils.moeda(valor)} — ${v.destino}`, 'sucesso');
+        }
+        DB.salvar('viagens');
+        UI.fecharModal('modal-viagem-cofrinho');
+        Render.viagens();
+        Render.dashboard();
     },
 
     abrirDetalheViagem: (id) => {
@@ -604,12 +751,28 @@ const Controladores = {
         document.getElementById('detalhe-titulo').textContent = `${v.emoji || '✈️'} ${v.destino}`;
         document.getElementById('detalhe-datas').textContent  = `${Utils.data(v.ida)} → ${Utils.data(v.volta)}`;
 
-        // Despesas desta viagem
-        const gastosDaViagem = Estado.financas
-            .filter(f => f.tipo === 'despesa' && f.cat === 'viagem')
-            .reduce((s, f) => s + f.valor, 0);
+        // Despesas vinculadas a ESTA viagem (via viagemId)
+        const despesasViagem = Estado.financas
+            .filter(f => f.tipo === 'despesa' && f.viagemId === v.id)
+            .sort((a, b) => new Date(b.data) - new Date(a.data));
+        const gastoReal = Utils.gastosDaViagem(v.id);
+        const saldoRestante = (v.orcamento || 0) - gastoReal;
+        const guardado = v.guardado || 0;
 
-        const pct = v.orcamento > 0 ? Math.min(100, Math.round((v.gastos || 0) / v.orcamento * 100)) : 0;
+        const pct     = v.orcamento > 0 ? Math.round(gastoReal / v.orcamento * 100) : 0;
+        const pctBar  = Math.min(100, pct);
+        const acima   = v.orcamento > 0 && gastoReal > v.orcamento;
+        const barGasto = acima ? 'var(--grad-warm)' : 'var(--grad-brand)';
+        const pctGuard = v.orcamento > 0 ? Math.min(100, Math.round(guardado / v.orcamento * 100)) : 0;
+
+        const listaDespesas = despesasViagem.length
+            ? despesasViagem.map(f => `
+                <div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.85rem">
+                    <span style="color:var(--text-muted);white-space:nowrap">${Utils.data(f.data)}</span>
+                    <span style="flex:1">${f.desc}</span>
+                    <strong style="color:var(--brand-rose)">${Utils.moeda(f.valor)}</strong>
+                </div>`).join('')
+            : `<div style="font-size:.85rem;color:var(--text-muted);padding:8px 0">Nenhuma despesa vinculada ainda.</div>`;
 
         document.getElementById('modal-viagem-detalhe-body').innerHTML = `
             <div class="form-group">
@@ -623,6 +786,24 @@ const Controladores = {
                         <strong style="color:var(--brand-emerald)">${Utils.moeda(v.orcamento)}</strong>
                     </div>
                 </div>
+            </div>
+            <div class="form-group">
+                <div class="form-label">Gasto real ${acima ? '<span style="color:var(--brand-rose)">— Acima do orçamento!</span>' : ''}</div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+                    <strong style="color:${acima ? 'var(--brand-rose)' : 'var(--text)'}">${Utils.moeda(gastoReal)} de ${Utils.moeda(v.orcamento)} (${pct}%)</strong>
+                    <span style="font-size:.8rem;color:${saldoRestante >= 0 ? 'var(--brand-emerald)' : 'var(--brand-rose)'}">Saldo: ${Utils.moeda(saldoRestante)}</span>
+                </div>
+                <div class="progress-wrap"><div class="progress-bar" style="width:${pctBar}%;background:${barGasto}"></div></div>
+            </div>
+            <div class="form-group">
+                <div class="form-label">🐷 Economizado</div>
+                <div style="margin-bottom:6px"><strong>${Utils.moeda(guardado)} de ${Utils.moeda(v.orcamento)} (${pctGuard}%)</strong></div>
+                <div class="progress-wrap"><div class="progress-bar" style="width:${pctGuard}%;background:var(--grad-success)"></div></div>
+                <button class="btn btn-success btn-sm" style="margin-top:10px" onclick="Controladores.abrirCofrinhoViagem('${v.id}')"><i class="fa-solid fa-piggy-bank"></i> Guardar</button>
+            </div>
+            <div class="form-group">
+                <div class="form-label">Despesas vinculadas</div>
+                <div style="background:var(--surface-alt);padding:12px 14px;border-radius:var(--r-lg);border:1px solid var(--border)">${listaDespesas}</div>
             </div>
             ${v.link ? `<div class="form-group"><a href="${v.link}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-arrow-up-right-from-square"></i> Acessar Reserva</a></div>` : ''}
             ${v.notas ? `<div class="form-group"><div class="form-label">Notas / Roteiro</div><div style="background:var(--surface-alt);padding:14px;border-radius:var(--r-lg);font-size:.875rem;white-space:pre-wrap;border:1px solid var(--border)">${v.notas}</div></div>` : ''}
@@ -686,7 +867,37 @@ const Controladores = {
         Estado[colecao] = Estado[colecao].filter(i => i.id !== id);
         DB.salvar(colecao);
         Render.tudo();
+        Render.popularSelectViagens();
         UI.toast('Item excluído.', '', 'info');
+    }
+};
+
+// ============================================================
+// ORÇAMENTOS MENSAIS POR CATEGORIA
+// ============================================================
+const Orcamentos = {
+    // Define (ou remove, se valor<=0) o limite mensal de uma categoria.
+    definir: (cat, valor) => {
+        cat = cat || document.getElementById('orc-categoria')?.value;
+        valor = (valor !== undefined) ? valor : parseFloat(document.getElementById('orc-valor')?.value);
+        if (!cat) return UI.toast('Selecione uma categoria', '', 'aviso');
+        if (!valor || valor <= 0) {
+            delete Estado.orcamentos[cat];
+            UI.toast('Limite removido', Utils.catInfo(cat).label, 'info');
+        } else {
+            Estado.orcamentos[cat] = valor;
+            UI.toast('Limite definido!', `${Utils.catInfo(cat).label} — ${Utils.moeda(valor)}/mês`, 'sucesso');
+        }
+        DB.salvar('orcamentos');
+        UI.fecharModal('modal-orcamento');
+        Render.orcamentos();
+    },
+
+    remover: (cat) => {
+        delete Estado.orcamentos[cat];
+        DB.salvar('orcamentos');
+        Render.orcamentos();
+        UI.toast('Limite removido', '', 'info');
     }
 };
 
@@ -694,6 +905,61 @@ const Controladores = {
 // BUSCA DE VIAGENS
 // ============================================================
 const ServicoBusca = {
+    // ── Histórico de buscas ──────────────────────────────────
+    carregarHistorico: () => {
+        try {
+            const raw = localStorage.getItem('pd-buscas');
+            Estado.historicoBuscas = raw ? JSON.parse(raw) : [];
+        } catch { Estado.historicoBuscas = []; }
+        ServicoBusca.renderHistorico();
+    },
+
+    _salvarHistorico: () => {
+        try { localStorage.setItem('pd-buscas', JSON.stringify(Estado.historicoBuscas)); } catch {}
+    },
+
+    registrarBusca: (busca) => {
+        if (!busca || !busca.destino) return;
+        // Evita duplicar entradas idênticas consecutivas de destino
+        Estado.historicoBuscas = Estado.historicoBuscas.filter(b =>
+            !(b.destino === busca.destino && b.origem === busca.origem && b.dataIda === busca.dataIda)
+        );
+        Estado.historicoBuscas.unshift(busca);
+        if (Estado.historicoBuscas.length > 8) Estado.historicoBuscas = Estado.historicoBuscas.slice(0, 8);
+        ServicoBusca._salvarHistorico();
+        ServicoBusca.renderHistorico();
+    },
+
+    limparHistorico: () => {
+        Estado.historicoBuscas = [];
+        ServicoBusca._salvarHistorico();
+        ServicoBusca.renderHistorico();
+    },
+
+    aplicarHistorico: (i) => {
+        const b = Estado.historicoBuscas[i];
+        if (!b) return;
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+        set('busca-origem', b.origem);
+        set('busca-destino', b.destino);
+        set('busca-data-ida', b.dataIda);
+        set('busca-data-volta', b.dataVolta);
+    },
+
+    renderHistorico: () => {
+        const el = document.getElementById('busca-historico');
+        if (!el) return;
+        if (!Estado.historicoBuscas.length) { el.innerHTML = ''; return; }
+        const chips = Estado.historicoBuscas.map((b, i) =>
+            `<button type="button" class="badge badge-viagem" style="cursor:pointer;border:none" onclick="ServicoBusca.aplicarHistorico(${i})" title="${b.origem||''} → ${b.destino}">${b.origem ? b.origem + ' → ' : ''}${b.destino}</button>`
+        ).join('');
+        el.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px">
+            <span style="font-size:.78rem;color:rgba(255,255,255,.6)">Buscas recentes:</span>
+            ${chips}
+            <button type="button" class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:.72rem" onclick="ServicoBusca.limparHistorico()"><i class="fa-solid fa-trash"></i> Limpar</button>
+        </div>`;
+    },
+
     redirecionar: (plataforma) => {
         const origem    = document.getElementById('busca-origem').value.trim();
         const destino   = document.getElementById('busca-destino').value.trim();
@@ -707,22 +973,29 @@ const ServicoBusca = {
         const dE = encodeURIComponent(destino);
         const oS = Utils.slug(origem);
         const dS = Utils.slug(destino);
+        const oIATA = Utils.iata(origem);
+        const dIATA = Utils.iata(destino);
         let url  = '';
 
         // Converte YYYY-MM-DD → DD-MM-YYYY (para plataformas que exigem)
         const toddmmyyyy = (s) => { if (!s) return ''; const [a,m,d] = s.split('-'); return `${d}-${m}-${a}`; };
 
+        // Registra a busca no histórico
+        ServicoBusca.registrarBusca({ origem, destino, dataIda, dataVolta, quando: new Date().toISOString() });
+
         switch (plataforma) {
 
             /* ── Voos ────────────────────────────────────────────────
-               Google Flights: motor completo com origem + destino.
-               Azul / GOL / LATAM: não expõem deep-link público estável
-               por cidade — abrem a homepage de cada companhia para que
-               o usuário complete a busca lá. ─────────────────────── */
+               Google Flights: motor completo, usa IATA quando disponível.
+               Azul / GOL: homepage (sem deep-link público estável).
+               LATAM: parâmetros na URL, IATA quando disponível. ────── */
 
             case 'googleflights':
-                // Motor completo: origem, destino, ida, volta, passageiros
-                url = `https://www.google.com/travel/flights/search?q=voos+de+${oE}+para+${dE}`;
+                if (oIATA && dIATA) {
+                    url = `https://www.google.com/travel/flights?q=Flights%20to%20${dIATA}%20from%20${oIATA}${dataIda ? '%20on%20' + dataIda : ''}`;
+                } else {
+                    url = `https://www.google.com/travel/flights/search?q=voos+de+${oE}+para+${dE}`;
+                }
                 break;
 
             case 'azul':
@@ -736,12 +1009,37 @@ const ServicoBusca = {
                 break;
 
             case 'latam':
-                // LATAM aceita parâmetros origin/destination/datas na URL
-                url = `https://www.latamairlines.com/br/pt/oferta-voos`
-                    + `?origin=${oE}&destination=${dE}`
-                    + `&outbound=${dataIda || ''}&inbound=${dataVolta || ''}`
-                    + `&adt=${pax}&chd=0&inf=0&trip=RT&cabin=Y&redemption=false`;
+                if (oIATA && dIATA) {
+                    url = `https://www.latamairlines.com/br/pt/oferta-voos`
+                        + `?origin=${oIATA}&destination=${dIATA}`
+                        + `&outbound=${dataIda || ''}&inbound=${dataVolta || ''}`
+                        + `&adt=${pax}&chd=0&inf=0&trip=RT&cabin=Y&redemption=false`;
+                } else {
+                    url = `https://www.latamairlines.com/br/pt/oferta-voos`
+                        + `?origin=${oE}&destination=${dE}`
+                        + `&outbound=${dataIda || ''}&inbound=${dataVolta || ''}`
+                        + `&adt=${pax}&chd=0&inf=0&trip=RT&cabin=Y&redemption=false`;
+                }
                 break;
+
+            case 'kayak':
+                if (oIATA && dIATA) {
+                    url = `https://www.kayak.com.br/flights/${oIATA}-${dIATA}/${dataIda || ''}${dataVolta ? '/' + dataVolta : ''}`;
+                } else {
+                    url = `https://www.kayak.com.br/flights?destination=${dE}`;
+                }
+                break;
+
+            case 'skyscanner': {
+                // Skyscanner usa datas YYMMDD no path (não YYYY-MM-DD)
+                const toYYMMDD = (s) => { if(!s) return ''; const [a,m,d]=s.split('-'); return a.slice(2)+m+d; };
+                if (oIATA && dIATA) {
+                    url = `https://www.skyscanner.com.br/transport/flights/${oIATA}/${dIATA}/${toYYMMDD(dataIda)}/${dataVolta ? toYYMMDD(dataVolta) + '/' : ''}`;
+                } else {
+                    url = `https://www.skyscanner.com.br/transporte/voos-para/${dS}/`;
+                }
+                break;
+            }
 
             /* ── Hospedagem ──────────────────────────────────────────
                Airbnb e Booking: motor completo com destino + datas. ── */
@@ -1161,6 +1459,8 @@ const Relatorios = {
 const Render = {
     tudo: () => {
         Render.dashboard();
+        Render.popularSelectViagens();
+        Render.orcamentos();
         // Renderiza a view ativa atual também
         const ativa = document.querySelector('.view.ativa')?.id;
         if (ativa === 'financas')   Render.financas();
@@ -1168,6 +1468,64 @@ const Render = {
         if (ativa === 'metas')      Render.metas();
         if (ativa === 'checklist')  Render.checklist();
         if (ativa === 'relatorios') Relatorios.atualizar();
+    },
+
+    // ── Popula os selects de viagem nos modais de finança ────
+    popularSelectViagens: () => {
+        const opts = '<option value="">Nenhuma</option>' +
+            Estado.viagens.map(v => `<option value="${v.id}">${v.emoji || '✈️'} ${v.destino}</option>`).join('');
+        ['fin-viagem', 'edit-fin-viagem'].forEach(id => {
+            const sel = document.getElementById(id);
+            if (!sel) return;
+            const atual = sel.value;
+            sel.innerHTML = opts;
+            // Preserva a seleção se a viagem ainda existir
+            if (atual && Estado.viagens.some(v => v.id === atual)) sel.value = atual;
+        });
+    },
+
+    // ── Orçamentos mensais por categoria ─────────────────────
+    orcamentos: () => {
+        const cont = document.getElementById('orcamentos-container');
+        if (!cont) return;
+        const cats = Object.keys(Estado.orcamentos || {});
+        if (!cats.length) {
+            cont.innerHTML = `<div class="empty-state" style="padding:20px">
+                <div class="empty-state-icon">🎯</div>
+                <h3>Nenhum limite definido</h3>
+                <p>Defina limites mensais por categoria para acompanhar seus gastos.</p>
+            </div>`;
+            return;
+        }
+
+        const mes = new Date().getMonth(), ano = new Date().getFullYear();
+        cont.innerHTML = cats.map(cat => {
+            const limite = Estado.orcamentos[cat];
+            const gasto = Estado.financas.filter(f => {
+                const d = new Date(f.data + 'T12:00:00');
+                return f.tipo === 'despesa' && (f.cat || Utils.inferirCat(f.desc)) === cat
+                    && d.getMonth() === mes && d.getFullYear() === ano;
+            }).reduce((s, f) => s + f.valor, 0);
+            const pct    = limite > 0 ? Math.round(gasto / limite * 100) : 0;
+            const pctBar = Math.min(100, pct);
+            const ci     = Utils.catInfo(cat);
+            let cor;
+            if (pct >= 100)     cor = 'var(--grad-warm)';
+            else if (pct >= 70) cor = 'linear-gradient(90deg,#f59e0b,#f97316)';
+            else                cor = 'var(--grad-success)';
+            const estourado = pct > 100;
+            return `<div class="card" style="padding:16px;margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <strong>${ci.emoji} ${ci.label}</strong>
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <span style="font-size:.85rem;color:${estourado ? 'var(--brand-rose)' : 'var(--text-muted)'}">${Utils.moeda(gasto)} / ${Utils.moeda(limite)} (${pct}%)</span>
+                        <button class="btn-icon danger" style="width:26px;height:26px;font-size:.72rem" onclick="Orcamentos.remover('${cat}')" title="Remover limite"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+                <div class="progress-wrap"><div class="progress-bar" style="width:${pctBar}%;background:${cor}"></div></div>
+                ${estourado ? `<div style="font-size:.78rem;color:var(--brand-rose);margin-top:6px"><i class="fa-solid fa-triangle-exclamation"></i> Orçamento de ${ci.label} estourado!</div>` : ''}
+            </div>`;
+        }).join('');
     },
 
     dashboard: () => {
@@ -1275,6 +1633,99 @@ const Render = {
         // Atualiza gráficos do dashboard
         Charts.fluxo();
         Charts.categorias();
+
+        // Panorama unificado do casal
+        Render.panorama();
+    },
+
+    panorama: () => {
+        const el = document.getElementById('panorama-container');
+        if (!el) return;
+
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const mes  = hoje.getMonth(), ano = hoje.getFullYear();
+
+        const tituloMini = 'font-size:.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px';
+        const valorGrande = "font-family:'Poppins',sans-serif;font-weight:700;font-size:1.6rem;line-height:1.1";
+        const miniCard = 'border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;background:var(--surface-alt)';
+
+        // (a) SAÚDE FINANCEIRA — saldo do mês atual
+        const finMes = Estado.financas.filter(f => {
+            const d = new Date(f.data+'T12:00:00');
+            return d.getMonth()===mes && d.getFullYear()===ano;
+        });
+        const rec = finMes.filter(f=>f.tipo==='receita').reduce((s,f)=>s+f.valor,0);
+        const dep = finMes.filter(f=>f.tipo==='despesa').reduce((s,f)=>s+f.valor,0);
+        const saldo = rec - dep;
+        const medidor = saldo > 0 ? 'Saudável 💚' : saldo === 0 ? 'Equilibrado 💛' : 'Atenção ❤️‍🩹';
+        const corSaldo = saldo > 0 ? 'var(--brand-emerald)' : saldo === 0 ? 'var(--brand-amber, #f59e0b)' : 'var(--brand-rose)';
+        const pctDesp = rec > 0 ? Math.round(dep / rec * 100) : 0;
+        const pctBar  = rec > 0 ? Math.min(100, pctDesp) : 0;
+        const barCor  = pctDesp > 100 ? 'var(--grad-warm)' : 'var(--grad-brand)';
+
+        const blocoSaude = `
+            <div style="${miniCard}">
+                <div style="${tituloMini}">Saúde Financeira</div>
+                <div style="${valorGrande};color:${corSaldo}">${medidor}</div>
+                <div style="font-size:.85rem;color:var(--text-muted);margin:8px 0 4px">
+                    Saldo do mês: <strong style="color:${corSaldo}">${Utils.moeda(saldo)}</strong>
+                </div>
+                <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:8px">
+                    ${rec > 0 ? `Despesas: ${pctDesp}% das receitas` : 'Sem receitas este mês'}
+                </div>
+                <div class="progress-wrap"><div class="progress-bar" style="width:${pctBar}%;background:${barCor}"></div></div>
+            </div>`;
+
+        // (b) PRÓXIMA VIAGEM — a futura mais próxima
+        const futuras = Estado.viagens
+            .filter(v => new Date(v.ida+'T12:00:00') >= hoje)
+            .sort((a,b) => new Date(a.ida) - new Date(b.ida));
+        const prox = futuras[0];
+
+        let blocoViagem;
+        if (prox) {
+            const dias = Utils.diasAte(prox.ida);
+            const diasTxt = dias > 0 ? `Faltam ${dias} dias` : dias === 0 ? 'É hoje! 🎉' : 'Em andamento';
+            const guardado = prox.guardado || 0;
+            const orc = prox.orcamento || 0;
+            const pctCofre = orc > 0 ? Math.min(100, Math.round(guardado / orc * 100)) : 0;
+            blocoViagem = `
+                <div style="${miniCard}">
+                    <div style="${tituloMini}">Próxima Viagem</div>
+                    <div style="${valorGrande}">${prox.emoji||'✈️'} ${prox.destino}</div>
+                    <div style="font-size:.85rem;color:var(--text-muted);margin:8px 0 4px">${diasTxt}</div>
+                    <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:8px">
+                        🐷 ${Utils.moeda(guardado)}${orc > 0 ? ` de ${Utils.moeda(orc)} (${pctCofre}%)` : ''}
+                    </div>
+                    <div class="progress-wrap"><div class="progress-bar" style="width:${pctCofre}%;background:var(--grad-success)"></div></div>
+                </div>`;
+        } else {
+            blocoViagem = `
+                <div style="${miniCard}">
+                    <div style="${tituloMini}">Próxima Viagem</div>
+                    <div style="${valorGrande};color:var(--text-muted)">Nenhuma viagem planejada</div>
+                    <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="navegarPara('viagens')"><i class="fa-solid fa-plus"></i> Planejar</button>
+                </div>`;
+        }
+
+        // (c) ECONOMIA TOTAL — metas + cofrinhos de viagem
+        const totalMetas   = Estado.metas.reduce((s,m) => s + (m.atual || 0), 0);
+        const totalCofrinhos = Estado.viagens.reduce((s,v) => s + (v.guardado || 0), 0);
+        const economiaTotal = totalMetas + totalCofrinhos;
+        const metasAtivas   = Estado.metas.filter(m => (m.atual || 0) < (m.alvo || 0)).length;
+        const viagensComCofre = Estado.viagens.filter(v => (v.guardado || 0) > 0).length;
+
+        const blocoEconomia = `
+            <div style="${miniCard}">
+                <div style="${tituloMini}">Economia Total</div>
+                <div style="${valorGrande};color:var(--brand-emerald)">${Utils.moeda(economiaTotal)}</div>
+                <div style="font-size:.82rem;color:var(--text-muted);margin-top:10px;display:flex;flex-direction:column;gap:4px">
+                    <span><span class="badge badge-viagem">${metasAtivas}</span> ${metasAtivas === 1 ? 'meta ativa' : 'metas ativas'}</span>
+                    <span><span class="badge badge-success">${viagensComCofre}</span> ${viagensComCofre === 1 ? 'viagem com cofrinho' : 'viagens com cofrinho'}</span>
+                </div>
+            </div>`;
+
+        el.innerHTML = blocoSaude + blocoViagem + blocoEconomia;
     },
 
     dashViagensPreview: () => {
@@ -1351,9 +1802,11 @@ const Render = {
         tbody.innerHTML = lista.map(f => {
             const cat = f.cat || Utils.inferirCat(f.desc);
             const ci  = Utils.catInfo(cat);
+            const badgeRec  = f.recorrente === 'mensal' ? ' <span class="badge badge-viagem" style="font-size:.65rem">🔁 Mensal</span>' : '';
+            const badgeParc = f.parcela ? ` <span class="badge badge-alerta" style="font-size:.65rem">💳 ${f.parcela.atual}/${f.parcela.total}</span>` : '';
             return `<tr>
                 <td style="white-space:nowrap">${Utils.data(f.data)}</td>
-                <td><strong>${f.desc}</strong></td>
+                <td><strong>${f.desc}</strong>${badgeRec}${badgeParc}</td>
                 <td><span class="cat-pill">${ci.emoji} ${ci.label}</span></td>
                 <td>${f.resp}</td>
                 <td><span class="badge ${f.tipo==='receita'?'badge-receita':'badge-despesa'}">${f.tipo==='receita'?'Receita':'Despesa'}</span></td>
@@ -1435,7 +1888,13 @@ const Render = {
             else                      { statusTxt = `${dias} dias`;  statusCls = 'futura'; }
 
             const grad  = gradMap[v.tipo] || gradMap.outros;
-            const pct   = v.orcamento > 0 ? Math.min(100, Math.round((v.gastos||0)/v.orcamento*100)) : 0;
+            const gastoReal = Utils.gastosDaViagem(v.id);
+            const pctReal   = v.orcamento > 0 ? Math.round(gastoReal / v.orcamento * 100) : 0;
+            const pctBar    = Math.min(100, pctReal);
+            const acima     = v.orcamento > 0 && gastoReal > v.orcamento;
+            const barGasto  = acima ? 'var(--grad-warm)' : 'var(--grad-brand)';
+            const guardado  = v.guardado || 0;
+            const pctGuard  = v.orcamento > 0 ? Math.min(100, Math.round(guardado / v.orcamento * 100)) : 0;
 
             return `<div class="trip-card" onclick="Controladores.abrirDetalheViagem('${v.id}')">
                 <div class="trip-card-hero" style="background:${grad}" data-emoji="${v.emoji||'✈️'}">
@@ -1451,14 +1910,23 @@ const Render = {
                         <span class="trip-budget-label">Orçamento</span>
                         <span class="trip-budget-value">${Utils.moeda(v.orcamento)}</span>
                     </div>
-                    ${v.orcamento > 0 ? `<div class="progress-wrap"><div class="progress-bar" style="width:${pct}%;background:var(--grad-brand)"></div></div><div style="font-size:.7rem;color:var(--text-muted);margin-top:4px">${pct}% usado</div>` : ''}
+                    ${v.orcamento > 0 ? `
+                        <div class="progress-wrap"><div class="progress-bar" style="width:${pctBar}%;background:${barGasto}"></div></div>
+                        <div style="font-size:.7rem;color:${acima ? 'var(--brand-rose)' : 'var(--text-muted)'};margin-top:4px">${Utils.moeda(gastoReal)} de ${Utils.moeda(v.orcamento)} (${pctReal}%)${acima ? ' — Acima do orçamento!' : ''}</div>
+                        <div class="progress-wrap" style="margin-top:8px"><div class="progress-bar" style="width:${pctGuard}%;background:var(--grad-success)"></div></div>
+                        <div style="font-size:.7rem;color:var(--text-muted);margin-top:4px">🐷 Economizado: ${Utils.moeda(guardado)} de ${Utils.moeda(v.orcamento)} (${pctGuard}%)</div>
+                    ` : ''}
                 </div>
                 <div class="trip-card-footer">
                     ${v.link ? `<a href="${v.link}" target="_blank" onclick="event.stopPropagation()" class="btn btn-ghost btn-sm"><i class="fa-solid fa-link"></i> Reserva</a>` : ''}
+                    <button class="btn btn-success btn-sm" onclick="event.stopPropagation();Controladores.abrirCofrinhoViagem('${v.id}')"><i class="fa-solid fa-piggy-bank"></i> Guardar</button>
                     <button class="btn btn-icon danger" onclick="event.stopPropagation();Controladores.deletar('viagens','${v.id}')"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>`;
         }).join('');
+
+        // Mantém os selects de viagem sincronizados quando as viagens mudam
+        Render.popularSelectViagens();
     },
 
     metas: () => {

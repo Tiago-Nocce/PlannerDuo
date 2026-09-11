@@ -106,22 +106,22 @@ Cada tarefa referencia cláusulas de requisito e, quando aplicável, a proprieda
     - **Validates: Requirements 2.5**
     - Comentário: `// Feature: multi-usuario-sso, Property 5`
 
-- [-] 4. Configurar ambiente de testes
+- [ ] 4. Configurar ambiente de testes
   - Criar `package.json` com devDependencies `fast-check`, `vitest`, `@firebase/rules-unit-testing`
   - Configurar script de teste em modo single-run (`vitest --run`), nunca watch
   - Criar helper de store em memória compartilhado pelos testes de propriedade
   - _Requirements: (infraestrutura de testes; suporta Propriedades 1–12)_
 
-- [~] 5. Checkpoint - lógica pura e testes de propriedade
+- [ ] 5. Checkpoint - lógica pura e testes de propriedade
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 6. Refatorar `Estado` e remover constantes fixas em `app.js`
-  - [~] 6.1 Remover `CASAL_DOC_ID` e os fallbacks `nome1:'Tiago'`/`nome2:'Yasmin'`; adicionar `Estado.casalId`
+  - [ ] 6.1 Remover `CASAL_DOC_ID` e os fallbacks `nome1:'Tiago'`/`nome2:'Yasmin'`; adicionar `Estado.casalId`
     - `nome1`/`nome2` iniciam `null` até carregar; adicionar `usuarioNome`
     - _Requirements: 3.1_
 
 - [ ] 7. Integrar `Auth` à resolução de casalId
-  - [~] 7.1 Implementar `Auth.resolverCasalId(user)` e `Auth._criarEspacoCasal(user)`
+  - [ ] 7.1 Implementar `Auth.resolverCasalId(user)` e `Auth._criarEspacoCasal(user)`
     - Envolver as funções puras `resolverCasalId`/`criarEspacoCasal` com um `store` adaptador do Firestore v8 (`db.collection('casais').doc(...)`)
     - Gravar `Estado.casalId` e `localStorage['pd-casalId']`; chamar antes de `_entrarNoApp`
     - Remover `_criarDocCasal`/`_criarDocInicial` antigos
@@ -133,7 +133,7 @@ Cada tarefa referencia cláusulas de requisito e, quando aplicável, a proprieda
     - _Requirements: 1.4, 1.5, 2.4_
 
 - [ ] 8. Refatorar `DB` para usar `Estado.casalId`
-  - [~] 8.1 Trocar `CASAL_DOC_ID` por `Estado.casalId` e derivar cache com `chaveCache()`
+  - [ ] 8.1 Trocar `CASAL_DOC_ID` por `Estado.casalId` e derivar cache com `chaveCache()`
     - `carregarCache` lê de `chaveCache()`; `ouvirNuvem` usa `onSnapshot(casais/{Estado.casalId})` e grava cache em `chaveCache()`; `salvar`/`salvarVarios` usam `set(casais/{Estado.casalId}, ..., {merge:true})`
     - Manter tratamento silencioso de erro (`console.warn` no snapshot, `toast` no save) sem interromper navegação
     - _Requirements: 2.5, 2.6, 7.1, 7.2, 7.3_
@@ -143,7 +143,7 @@ Cada tarefa referencia cláusulas de requisito e, quando aplicável, a proprieda
     - `erroFirebase(code)` mapeia códigos conhecidos e fallback (1.3)
     - _Requirements: 1.3, 7.1, 7.3_
 
-  - [~] 8.3 Atualizar `logout` para remover cache e ponteiro do usuário
+  - [ ] 8.3 Atualizar `logout` para remover cache e ponteiro do usuário
     - Remover `pd-cache:{casalId}` (via `chaveCache()`) e `pd-casalId`; redirecionar para auth.html
     - _Requirements: 7.4_
 
@@ -153,13 +153,13 @@ Cada tarefa referencia cláusulas de requisito e, quando aplicável, a proprieda
     - Comentário: `// Feature: multi-usuario-sso, Property 12`
 
 - [ ] 9. Criar objeto `Convites` em `app.js`
-  - [~] 9.1 Implementar `Convites.gerarCodigo/criar/abrirModal/aceitar`
+  - [ ] 9.1 Implementar `Convites.gerarCodigo/criar/abrirModal/aceitar`
     - `criar` chama `criarConvite` com store adaptador para `Estado.casalId`; `aceitar` chama `aceitarConvite`, re-resolve `Estado.casalId` e recarrega dados
     - Mapear os erros (`invalido/expirou/cheio/ja_membro`) para `toast` com as mensagens do design
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9_
 
 - [ ] 10. Adicionar UI de convite em `app.html`
-  - [~] 10.1 Adicionar modais `modal-convite-gerar` e `modal-convite-aceitar` e item de sidebar "Convidar parceiro(a)"
+  - [ ] 10.1 Adicionar modais `modal-convite-gerar` e `modal-convite-aceitar` e item de sidebar "Convidar parceiro(a)"
     - Gerar: exibe código de 8 chars + botão copiar + validade; Aceitar: input de 8 chars + botão "Entrar no espaço"
     - Sidebar abre o modal apropriado conforme o número de membros atuais
     - _Requirements: 4.3, 4.4_
@@ -168,11 +168,11 @@ Cada tarefa referencia cláusulas de requisito e, quando aplicável, a proprieda
     - O modal de gerar exibe o código produzido (4.3)
     - _Requirements: 4.3_
 
-- [~] 11. Checkpoint - integração cliente
+- [ ] 11. Checkpoint - integração cliente
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 12. Reescrever `firestore.rules` com autorização por e-mail do token
-  - [~] 12.1 Implementar regras para `casais/{casalId}` e `convites/{codigo}`
+  - [ ] 12.1 Implementar regras para `casais/{casalId}` e `convites/{codigo}`
     - `souMembro()` exige `request.auth.token.email in resource.data.membros`; `create` só se `casalId == request.auth.uid`; dono lê/escreve o próprio ponteiro; `convites`: `get`/`create`/`delete` para autenticados; bloquear `/{document=**}`
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
@@ -186,7 +186,7 @@ Cada tarefa referencia cláusulas de requisito e, quando aplicável, a proprieda
     - _Requirements: 7.2_
 
 - [ ] 13. Migração do documento legado `tiago-yasmin`
-  - [~] 13.1 Escrever script de migração por ponteiro (sem cópia de dados)
+  - [ ] 13.1 Escrever script de migração por ponteiro (sem cópia de dados)
     - Criar `scripts/migrar-tiago-yasmin.js`: garante `casais/tiago-yasmin.membros` com ambos os e-mails; cria ponteiros `casais/{uidTiago}` e `casais/{uidYasmin}` com `{ casalIdRef: 'tiago-yasmin' }`; não apaga o documento legado (Decisão D5)
     - _Requirements: 6.1, 6.2, 6.3_
 
@@ -195,7 +195,7 @@ Cada tarefa referencia cláusulas de requisito e, quando aplicável, a proprieda
     - _Requirements: 6.1, 6.3_
 
 - [ ] 14. Remover textos fixos e mensagens de bloqueio
-  - [~] 14.1 Limpar `auth.html` e `Auth._bloquear`
+  - [ ] 14.1 Limpar `auth.html` e `Auth._bloquear`
     - Remover literais `Tiago`/`Yasmin` de `auth.html`; `_bloquear` usa mensagem genérica de "Acesso não autorizado" sem nomes próprios; confirmar ausência do literal `tiago-yasmin` no código-fonte novo do cliente
     - _Requirements: 3.1, 3.4_
 
@@ -203,7 +203,7 @@ Cada tarefa referencia cláusulas de requisito e, quando aplicável, a proprieda
     - Texto de bloqueio não contém `Tiago`/`Yasmin`; código do cliente não contém o literal `tiago-yasmin` (exceto no script de migração)
     - _Requirements: 3.1, 3.4_
 
-- [~] 15. Checkpoint final - toda a suíte de testes
+- [ ] 15. Checkpoint final - toda a suíte de testes
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

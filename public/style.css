@@ -1293,6 +1293,8 @@ tbody td {
 .pb-clickbus { background: linear-gradient(135deg, #00b14f, #008a3d); }
 .pb-maps     { background: linear-gradient(135deg, #34a853, #1a8a3e); }
 .pb-tripadv  { background: linear-gradient(135deg, #00af87, #008a6b); }
+.pb-kayak      { background: linear-gradient(135deg, #ff690f, #d9530a); }
+.pb-skyscanner { background: linear-gradient(135deg, #0770e3, #0552aa); }
 
 /* ═══════════════════════════════════════════════════
    GOALS / METAS
