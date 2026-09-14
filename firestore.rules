@@ -3,55 +3,32 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function autenticado() { return request.auth != null; }
-    function emailAuth()   { return request.auth.token.email; }
 
-    // Espaço_Casal
+    // Documentos do casal (finanças, viagens, metas, checklist)
     match /casais/{casalId} {
-
-      // Membro já registrado: e-mail do token consta no mapa membros
-      function souMembro() {
-        return autenticado()
-          && resource.data.membros != null
-          && emailAuth() in resource.data.membros;
-      }
-
-      // Dono do doc/ponteiro: o id do documento é o próprio uid
+      // Dono: o ID do documento é o próprio UID do usuário
       function souDono() {
         return autenticado() && casalId == request.auth.uid;
       }
-
-      // Aceite de convite (Decisão D4): um parceiro que ainda não é membro
-      // adiciona o próprio e-mail ao mapa membros do espaço do criador.
-      // Abordagem pragmática (limitação das rules p/ diff de maps):
-      // permite o update apenas se o e-mail do requisitante estiver no
-      // membros resultante e o espaço ainda tiver menos de 2 membros.
-      function aceitandoConvite() {
+      // Membro: e-mail do usuário consta no mapa 'membros' do documento
+      function souMembro() {
         return autenticado()
-          && emailAuth() in request.resource.data.membros
-          && (resource.data.membros == null || resource.data.membros.size() < 2);
+          && resource.data.membros != null
+          && request.auth.token.email in resource.data.membros;
       }
 
-      // Criação: só o dono do uid pode criar seu doc (espaço ou ponteiro)
       allow create: if souDono();
-
-      // Leitura/escrita do espaço: apenas membros já registrados
-      allow read, write: if souMembro();
-
-      // O próprio dono pode ler/escrever seu doc/ponteiro (ler ponteiro,
-      // e o parceiro gravar seu próprio ponteiro casais/{meuUid})
-      allow read, write: if souDono();
-
-      // Aceite de convite: parceiro adiciona seu e-mail ao membros alvo
-      allow update: if aceitandoConvite();
+      allow read, write: if souDono() || souMembro();
+      // Permite a um parceiro entrar (adicionar seu e-mail) num espaço com < 2 membros
+      allow update: if autenticado()
+        && request.resource.data.membros != null
+        && request.auth.token.email in request.resource.data.membros
+        && (resource.data.membros == null || resource.data.membros.size() < 2);
     }
 
-    // Convites
+    // Convites de parceiro
     match /convites/{codigo} {
-      // Qualquer autenticado pode ler um convite (para tentar ingressar)
-      allow get: if autenticado();
-      // Criar convite: autenticado (o app garante que é membro do casalId gravado)
-      allow create: if autenticado();
-      allow delete: if autenticado();
+      allow get, create, delete: if autenticado();
     }
 
     // Bloqueia todo o resto

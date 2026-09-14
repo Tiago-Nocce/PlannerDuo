@@ -122,7 +122,7 @@
 
         <p class="auth-switch">
           Primeiro acesso? <a href="#" onclick="trocarSecao('cadastro')">Criar conta do casal</a>
-          &nbsp;·&nbsp; <a href="#" onclick="auth.signOut()" style="color:var(--text-muted);font-size:.8rem">Trocar conta</a>
+          &nbsp;·&nbsp; <a href="#" onclick="trocarConta()" style="color:var(--text-muted);font-size:.8rem">Trocar conta</a>
         </p>
       </div>
 
@@ -242,6 +242,18 @@ auth.onAuthStateChanged((user) => {
 function trocarSecao(tipo) {
   document.querySelectorAll('.auth-section').forEach(s => s.classList.remove('ativa'));
   document.getElementById('secao-' + tipo).classList.add('ativa');
+}
+
+// Troca de conta: limpa o casalId e todo o cache local do casal anterior
+// antes de deslogar, evitando que dados de outro casal apareçam no login seguinte.
+function trocarConta() {
+  try {
+    localStorage.removeItem('pd-casalId');
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('pd-cache:'))
+      .forEach(k => localStorage.removeItem(k));
+  } catch (e) {}
+  auth.signOut();
 }
 
 function togglePwd(id, el) {

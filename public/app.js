@@ -58,8 +58,11 @@ const Utils = {
     },
 
     diasAte: (dateStr) => {
+        if (!dateStr) return null;
         const hoje = new Date(); hoje.setHours(0,0,0,0);
-        const alvo = new Date(dateStr + 'T12:00:00'); alvo.setHours(0,0,0,0);
+        const alvo = new Date(dateStr + 'T12:00:00');
+        if (isNaN(alvo.getTime())) return null;
+        alvo.setHours(0,0,0,0);
         return Math.ceil((alvo - hoje) / 86400000);
     },
 
@@ -68,6 +71,27 @@ const Utils = {
         .replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-'),
 
     inicial: (nome) => (nome || '?')[0].toUpperCase(),
+
+    // ── Nomes do casal com fallback estável (nunca null/"null") ──
+    // Retorna sempre nomes utilizáveis para gravação, comparação e labels.
+    nomesCasal: () => ({
+        p1: Estado.nome1 || 'Pessoa 1',
+        p2: Estado.nome2 || 'Pessoa 2'
+    }),
+
+    // ── Parse de valor monetário pt-BR ───────────────────────
+    // Aceita '100,50', '1.234,56' e '100.50'. Se houver vírgula, trata
+    // pontos como separador de milhar e a vírgula como decimal; senão
+    // usa parseFloat direto. Retorna NaN se inválido.
+    parseValor: (str) => {
+        if (str == null) return NaN;
+        let s = String(str).trim();
+        if (s === '') return NaN;
+        if (s.indexOf(',') !== -1) {
+            s = s.replace(/\./g, '').replace(',', '.');
+        }
+        return parseFloat(s);
+    },
 
     catInfo: (cat) => {
         const mapa = {
@@ -176,8 +200,9 @@ const UI = {
     },
 
     atualizarNomes: () => {
-        // Selectboxes de responsável nos modais
-        const p1 = Estado.nome1, p2 = Estado.nome2;
+        // Selectboxes de responsável nos modais — usa fallback estável
+        // para nunca escrever 'null' no textContent das options.
+        const { p1, p2 } = Utils.nomesCasal();
         ['fin-resp-p1','edit-fin-resp-p1','rel-p1-opt'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.textContent = p1;
@@ -332,12 +357,6 @@ const Auth = {
         }
         const app = document.getElementById('tela-app');
         if (app) app.style.opacity = '1';
-    },
-
-    _bloquear: () => {
-        auth.signOut();
-        alert('Acesso não autorizado.');
-        window.location.href = 'auth.html';
     },
 
     // Resolve o casalId do Usuário autenticado (Decisão D1). Implementação
@@ -571,17 +590,26 @@ const Controladores = {
     // ── Finanças ────────────────────────────────────────────
     adicionarFinanca: () => {
         const tipo  = document.getElementById('fin-tipo').value;
-        const resp  = document.getElementById('fin-resp').value;
+        let   resp  = document.getElementById('fin-resp').value;
         const desc  = document.getElementById('fin-desc').value.trim();
-        const valor = parseFloat(document.getElementById('fin-valor').value);
+        const valor = Utils.parseValor(document.getElementById('fin-valor').value);
         const data  = document.getElementById('fin-data').value;
         const cat   = document.getElementById('fin-categoria').value || Utils.inferirCat(desc);
         const obs   = document.getElementById('fin-obs')?.value.trim() || '';
         const viagemId   = document.getElementById('fin-viagem')?.value || '';
-        const recorrente = document.getElementById('fin-recorrente')?.value || '';
+        let   recorrente = document.getElementById('fin-recorrente')?.value || '';
         const parcelas   = parseInt(document.getElementById('fin-parcelas')?.value) || 1;
 
-        if (!desc || !valor || !data) return UI.toast('Preencha todos os campos', '', 'aviso');
+        // Responsável nunca pode ser gravado como "null" ou vazio.
+        if (!resp || resp === 'null') resp = Utils.nomesCasal().p1;
+
+        if (!desc || !data || isNaN(valor) || valor <= 0) return UI.toast('Preencha os campos corretamente', '', 'aviso');
+
+        // Parcelamento e recorrência não se combinam: prioriza o parcelamento.
+        if (parcelas > 1 && recorrente === 'mensal') {
+            UI.toast('Parcelamento e recorrência não se combinam', 'Registrando apenas como parcelado.', 'aviso');
+            recorrente = '';
+        }
 
         // ── Parcelamento: divide o valor em N parcelas mensais ──
         if (parcelas > 1) {
@@ -678,12 +706,14 @@ const Controladores = {
         const id  = document.getElementById('edit-fin-id').value;
         const idx = Estado.financas.findIndex(f => f.id === id);
         if (idx === -1) return;
+        let respEdit = document.getElementById('edit-fin-resp').value;
+        if (!respEdit || respEdit === 'null') respEdit = Utils.nomesCasal().p1;
         Estado.financas[idx] = {
             ...Estado.financas[idx],
             tipo:  document.getElementById('edit-fin-tipo').value,
-            resp:  document.getElementById('edit-fin-resp').value,
+            resp:  respEdit,
             desc:  document.getElementById('edit-fin-desc').value.trim(),
-            valor: parseFloat(document.getElementById('edit-fin-valor').value),
+            valor: Utils.parseValor(document.getElementById('edit-fin-valor').value),
             data:  document.getElementById('edit-fin-data').value,
             cat:   document.getElementById('edit-fin-categoria').value,
             viagemId: document.getElementById('edit-fin-viagem')?.value || '',
@@ -701,7 +731,7 @@ const Controladores = {
         const emoji    = document.getElementById('v-emoji').value.trim() || '✈️';
         const ida      = document.getElementById('v-ida').value;
         const volta    = document.getElementById('v-volta').value;
-        const orcamento= parseFloat(document.getElementById('v-orcamento').value) || 0;
+        const orcamento= Utils.parseValor(document.getElementById('v-orcamento').value) || 0;
         const tipo     = document.getElementById('v-tipo').value;
         const link     = document.getElementById('v-link').value.trim();
         const notas    = document.getElementById('v-notas').value.trim();
@@ -728,8 +758,8 @@ const Controladores = {
 
     guardarViagem: () => {
         const id    = document.getElementById('cofrinho-viagem-id').value;
-        const valor = parseFloat(document.getElementById('cofrinho-valor').value);
-        if (!valor || valor <= 0) return UI.toast('Informe um valor válido', '', 'aviso');
+        const valor = Utils.parseValor(document.getElementById('cofrinho-valor').value);
+        if (isNaN(valor) || valor <= 0) return UI.toast('Informe um valor válido', '', 'aviso');
         const idx = Estado.viagens.findIndex(v => v.id === id);
         if (idx === -1) return;
         Estado.viagens[idx].guardado = (Estado.viagens[idx].guardado || 0) + valor;
@@ -790,7 +820,7 @@ const Controladores = {
             <div class="form-group">
                 <div class="form-label">Gasto real ${acima ? '<span style="color:var(--brand-rose)">— Acima do orçamento!</span>' : ''}</div>
                 <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-                    <strong style="color:${acima ? 'var(--brand-rose)' : 'var(--text)'}">${Utils.moeda(gastoReal)} de ${Utils.moeda(v.orcamento)} (${pct}%)</strong>
+                    <strong style="color:${acima ? 'var(--brand-rose)' : 'var(--text-primary)'}">${Utils.moeda(gastoReal)} de ${Utils.moeda(v.orcamento)} (${pct}%)</strong>
                     <span style="font-size:.8rem;color:${saldoRestante >= 0 ? 'var(--brand-emerald)' : 'var(--brand-rose)'}">Saldo: ${Utils.moeda(saldoRestante)}</span>
                 </div>
                 <div class="progress-wrap"><div class="progress-bar" style="width:${pctBar}%;background:${barGasto}"></div></div>
@@ -820,12 +850,12 @@ const Controladores = {
         const titulo = document.getElementById('meta-titulo').value.trim();
         const emoji  = document.getElementById('meta-emoji').value.trim() || '🎯';
         const cat    = document.getElementById('meta-cat').value;
-        const alvo   = parseFloat(document.getElementById('meta-alvo').value);
-        const atual  = parseFloat(document.getElementById('meta-atual').value) || 0;
+        const alvo   = Utils.parseValor(document.getElementById('meta-alvo').value);
+        const atual  = Utils.parseValor(document.getElementById('meta-atual').value) || 0;
         const prazo  = document.getElementById('meta-prazo').value;
         const desc   = document.getElementById('meta-desc')?.value.trim() || '';
 
-        if (!titulo || !alvo) return UI.toast('Preencha título e valor alvo', '', 'aviso');
+        if (!titulo || isNaN(alvo) || alvo <= 0) return UI.toast('Preencha título e valor alvo', '', 'aviso');
 
         Estado.metas.push({ id: Utils.id(), titulo, emoji, cat, alvo, atual, prazo, desc });
         DB.salvar('metas');
@@ -835,8 +865,8 @@ const Controladores = {
 
     depositarMeta: () => {
         const id    = document.getElementById('deposito-meta-id').value;
-        const valor = parseFloat(document.getElementById('deposito-valor').value);
-        if (!valor || valor <= 0) return UI.toast('Informe um valor válido', '', 'aviso');
+        const valor = Utils.parseValor(document.getElementById('deposito-valor').value);
+        if (isNaN(valor) || valor <= 0) return UI.toast('Informe um valor válido', '', 'aviso');
 
         const idx = Estado.metas.findIndex(m => m.id === id);
         if (idx === -1) return;
@@ -861,6 +891,15 @@ const Controladores = {
         UI.abrirModal('modal-meta-deposito');
     },
 
+    // ── Depósito inline rápido (a partir do card de meta) ────
+    _depositoInline: (id) => {
+        const val = Utils.parseValor(document.getElementById(`dep-inline-${id}`)?.value);
+        if (isNaN(val) || val <= 0) return UI.toast('Informe um valor', '', 'aviso');
+        document.getElementById('deposito-meta-id').value = id;
+        document.getElementById('deposito-valor').value   = val;
+        Controladores.depositarMeta();
+    },
+
     // ── Deletar genérico ─────────────────────────────────────
     deletar: (colecao, id) => {
         if (!confirm('Excluir permanentemente?')) return;
@@ -879,9 +918,9 @@ const Orcamentos = {
     // Define (ou remove, se valor<=0) o limite mensal de uma categoria.
     definir: (cat, valor) => {
         cat = cat || document.getElementById('orc-categoria')?.value;
-        valor = (valor !== undefined) ? valor : parseFloat(document.getElementById('orc-valor')?.value);
+        valor = (valor !== undefined) ? valor : Utils.parseValor(document.getElementById('orc-valor')?.value);
         if (!cat) return UI.toast('Selecione uma categoria', '', 'aviso');
-        if (!valor || valor <= 0) {
+        if (isNaN(valor) || valor <= 0) {
             delete Estado.orcamentos[cat];
             UI.toast('Limite removido', Utils.catInfo(cat).label, 'info');
         } else {
@@ -1202,9 +1241,10 @@ const Exportacao = {
     gerarCSV: () => {
         if (!Estado.financas.length) return UI.toast('Sem dados para exportar', '', 'aviso');
         const cab  = 'Data,Descrição,Responsável,Tipo,Categoria,Valor\n';
+        const esc  = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
         const rows = Estado.financas
             .sort((a,b) => new Date(b.data) - new Date(a.data))
-            .map(f => `${f.data},"${f.desc}",${f.resp},${f.tipo},${f.cat || ''},${f.valor}`)
+            .map(f => `${f.data},${esc(f.desc)},${esc(f.resp)},${f.tipo},${f.cat || ''},${f.valor}`)
             .join('\n');
         const blob = new Blob([cab + rows], { type: 'text/csv;charset=utf-8;' });
         const a = document.createElement('a');
@@ -1315,13 +1355,14 @@ const Charts = {
 
         const mes   = new Date().getMonth();
         const ano   = new Date().getFullYear();
-        const f1    = Estado.financas.filter(f => { const d=new Date(f.data+'T12:00:00'); return f.tipo==='despesa' && f.resp===Estado.nome1 && d.getMonth()===mes && d.getFullYear()===ano; }).reduce((s,f)=>s+f.valor,0);
-        const f2    = Estado.financas.filter(f => { const d=new Date(f.data+'T12:00:00'); return f.tipo==='despesa' && f.resp===Estado.nome2 && d.getMonth()===mes && d.getFullYear()===ano; }).reduce((s,f)=>s+f.valor,0);
+        const { p1: n1, p2: n2 } = Utils.nomesCasal();
+        const f1    = Estado.financas.filter(f => { const d=new Date(f.data+'T12:00:00'); return f.tipo==='despesa' && f.resp===n1 && d.getMonth()===mes && d.getFullYear()===ano; }).reduce((s,f)=>s+f.valor,0);
+        const f2    = Estado.financas.filter(f => { const d=new Date(f.data+'T12:00:00'); return f.tipo==='despesa' && f.resp===n2 && d.getMonth()===mes && d.getFullYear()===ano; }).reduce((s,f)=>s+f.valor,0);
 
         _charts.responsavel = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: [Estado.nome1, Estado.nome2],
+                labels: [n1, n2],
                 datasets: [{ data: [f1, f2], backgroundColor: ['rgba(37,99,235,.8)', 'rgba(249,115,22,.8)'], borderRadius: 8, borderSkipped: false }]
             },
             options: {
@@ -1376,9 +1417,10 @@ const Relatorios = {
             meses.push({ mes: d.getMonth(), ano: d.getFullYear(), label: d.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) });
         }
 
+        const { p1: relN1, p2: relN2 } = Utils.nomesCasal();
         const filtrarF = (f) => {
-            if (pessoa === 'p1' && f.resp !== Estado.nome1) return false;
-            if (pessoa === 'p2' && f.resp !== Estado.nome2) return false;
+            if (pessoa === 'p1' && f.resp !== relN1) return false;
+            if (pessoa === 'p2' && f.resp !== relN2) return false;
             return true;
         };
 
@@ -1390,8 +1432,8 @@ const Relatorios = {
                 const rec = fin.filter(f=>f.tipo==='receita').reduce((s,f)=>s+f.valor,0);
                 const dep = fin.filter(f=>f.tipo==='despesa').reduce((s,f)=>s+f.valor,0);
                 const sal = rec - dep;
-                const p1  = fin.filter(f=>f.tipo==='despesa'&&f.resp===Estado.nome1).reduce((s,f)=>s+f.valor,0);
-                const p2  = fin.filter(f=>f.tipo==='despesa'&&f.resp===Estado.nome2).reduce((s,f)=>s+f.valor,0);
+                const p1  = fin.filter(f=>f.tipo==='despesa'&&f.resp===relN1).reduce((s,f)=>s+f.valor,0);
+                const p2  = fin.filter(f=>f.tipo==='despesa'&&f.resp===relN2).reduce((s,f)=>s+f.valor,0);
                 return `<tr>
                     <td><strong>${m.label}</strong></td>
                     <td class="text-success fw-600">${Utils.moeda(rec)}</td>
@@ -1543,8 +1585,13 @@ const Render = {
         if (elDelta)  {
             if (prox) {
                 const dias = Utils.diasAte(prox.ida);
-                elDelta.textContent = dias > 0 ? `Faltam ${dias} dias` : dias === 0 ? 'Hoje!' : 'Em andamento';
-                elDelta.className = 'stat-delta ' + (dias <= 7 ? 'up' : 'neu');
+                if (dias === null) {
+                    elDelta.textContent = '—';
+                    elDelta.className = 'stat-delta neu';
+                } else {
+                    elDelta.textContent = dias > 0 ? `Faltam ${dias} dias` : dias === 0 ? 'Hoje!' : 'Em andamento';
+                    elDelta.className = 'stat-delta ' + (dias <= 7 ? 'up' : 'neu');
+                }
             } else {
                 elDelta.textContent = 'nenhuma planejada';
                 elDelta.className = 'stat-delta neu';
@@ -1588,8 +1635,9 @@ const Render = {
         if (elMetaDelta) { elMetaDelta.textContent = `${Estado.metas.filter(m=>m.atual>=m.alvo).length} concluídas`; elMetaDelta.className='stat-delta neu'; }
 
         // Acerto de contas
-        const p1total = Estado.financas.filter(f=>f.tipo==='despesa'&&f.resp===Estado.nome1).reduce((s,f)=>s+f.valor,0);
-        const p2total = Estado.financas.filter(f=>f.tipo==='despesa'&&f.resp===Estado.nome2).reduce((s,f)=>s+f.valor,0);
+        const { p1: nome1, p2: nome2 } = Utils.nomesCasal();
+        const p1total = Estado.financas.filter(f=>f.tipo==='despesa'&&f.resp===nome1).reduce((s,f)=>s+f.valor,0);
+        const p2total = Estado.financas.filter(f=>f.tipo==='despesa'&&f.resp===nome2).reduce((s,f)=>s+f.valor,0);
         const dif     = Math.abs(p1total - p2total) / 2;
         const elAcerto = document.getElementById('stat-acerto');
         const elAcertoDelta = document.getElementById('stat-acerto-delta');
@@ -1598,11 +1646,11 @@ const Render = {
                 elAcerto.textContent = 'Quite! ✓';
                 if (elAcertoDelta) { elAcertoDelta.textContent = 'Tudo equilibrado'; elAcertoDelta.className='stat-delta up'; }
             } else if (p1total > p2total) {
-                elAcerto.textContent = `${Estado.nome2} deve ${Utils.moeda(dif)}`;
-                if (elAcertoDelta) { elAcertoDelta.textContent = `a ${Estado.nome1}`; elAcertoDelta.className='stat-delta down'; }
+                elAcerto.textContent = `${nome2} deve ${Utils.moeda(dif)}`;
+                if (elAcertoDelta) { elAcertoDelta.textContent = `a ${nome1}`; elAcertoDelta.className='stat-delta down'; }
             } else {
-                elAcerto.textContent = `${Estado.nome1} deve ${Utils.moeda(dif)}`;
-                if (elAcertoDelta) { elAcertoDelta.textContent = `a ${Estado.nome2}`; elAcertoDelta.className='stat-delta down'; }
+                elAcerto.textContent = `${nome1} deve ${Utils.moeda(dif)}`;
+                if (elAcertoDelta) { elAcertoDelta.textContent = `a ${nome2}`; elAcertoDelta.className='stat-delta down'; }
             }
         }
 
@@ -1615,8 +1663,8 @@ const Render = {
         const elSplit = document.getElementById('split-resultado');
         if (elSplit) {
             if (dif < 0.01) { elSplit.textContent = '✓ Tudo quite entre vocês!'; elSplit.className='split-result quite'; }
-            else if (p1total > p2total) { elSplit.textContent = `${Estado.nome2} deve pagar ${Utils.moeda(dif)} para ${Estado.nome1}`; elSplit.className='split-result deve'; }
-            else { elSplit.textContent = `${Estado.nome1} deve pagar ${Utils.moeda(dif)} para ${Estado.nome2}`; elSplit.className='split-result deve'; }
+            else if (p1total > p2total) { elSplit.textContent = `${nome2} deve pagar ${Utils.moeda(dif)} para ${nome1}`; elSplit.className='split-result deve'; }
+            else { elSplit.textContent = `${nome1} deve pagar ${Utils.moeda(dif)} para ${nome2}`; elSplit.className='split-result deve'; }
         }
 
         // Preview viagens no dashboard
@@ -1685,7 +1733,7 @@ const Render = {
         let blocoViagem;
         if (prox) {
             const dias = Utils.diasAte(prox.ida);
-            const diasTxt = dias > 0 ? `Faltam ${dias} dias` : dias === 0 ? 'É hoje! 🎉' : 'Em andamento';
+            const diasTxt = dias === null ? '—' : dias > 0 ? `Faltam ${dias} dias` : dias === 0 ? 'É hoje! 🎉' : 'Em andamento';
             const guardado = prox.guardado || 0;
             const orc = prox.orcamento || 0;
             const pctCofre = orc > 0 ? Math.min(100, Math.round(guardado / orc * 100)) : 0;
@@ -1748,14 +1796,16 @@ const Render = {
 
         el.innerHTML = proximas.map(v => {
             const dias = Utils.diasAte(v.ida);
-            const statusTxt = dias > 0 ? `Faltam ${dias} dias` : dias === 0 ? 'Hoje!' : 'Em andamento';
+            const semData = dias === null;
+            const statusTxt = semData ? '—' : dias > 0 ? `Faltam ${dias} dias` : dias === 0 ? 'Hoje!' : 'Em andamento';
+            const badgeCls = semData ? 'badge-viagem' : dias <= 0 ? 'badge-success' : dias <= 30 ? 'badge-alerta' : 'badge-viagem';
             return `<div style="display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--border)">
                 <div style="width:42px;height:42px;border-radius:12px;background:var(--grad-cool);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">${v.emoji||'✈️'}</div>
                 <div style="flex:1">
                     <div style="font-weight:700">${v.destino}</div>
                     <div style="font-size:.78rem;color:var(--text-muted)">${Utils.data(v.ida)} → ${Utils.data(v.volta)}</div>
                 </div>
-                <span class="badge ${dias <= 0 ? 'badge-success' : dias <= 30 ? 'badge-alerta' : 'badge-viagem'}">${statusTxt}</span>
+                <span class="badge ${badgeCls}">${statusTxt}</span>
             </div>`;
         }).join('');
     },
@@ -1778,8 +1828,8 @@ const Render = {
                 lista = lista.filter(f => (f.cat || Utils.inferirCat(f.desc)) === filtroAtivo);
             }
         }
-        if (busca)     lista = lista.filter(f => f.desc.toLowerCase().includes(busca) || f.resp.toLowerCase().includes(busca));
-        if (mesFiltro) lista = lista.filter(f => f.data.startsWith(mesFiltro));
+        if (busca)     lista = lista.filter(f => (f.desc||'').toLowerCase().includes(busca) || (f.resp||'').toLowerCase().includes(busca));
+        if (mesFiltro) lista = lista.filter(f => f.data && f.data.startsWith(mesFiltro));
 
         // Totais do mês vigente (independente do filtro)
         const mes = new Date().getMonth(), ano = new Date().getFullYear();
@@ -1827,7 +1877,7 @@ const Render = {
     popularSelectMes: () => {
         const sel = document.getElementById('fin-mes');
         if (!sel) return;
-        const meses = new Set(Estado.financas.map(f => f.data.slice(0,7)));
+        const meses = new Set(Estado.financas.filter(f => f.data).map(f => f.data.slice(0,7)));
         sel.innerHTML = '<option value="">Todos os meses</option>';
         [...meses].sort().reverse().forEach(m => {
             const [a, mo] = m.split('-');
@@ -1881,11 +1931,14 @@ const Render = {
             const ida   = new Date(v.ida+'T12:00:00');   ida.setHours(0,0,0,0);
             const volta = new Date(v.volta+'T12:00:00'); volta.setHours(0,0,0,0);
             const dias  = Utils.diasAte(v.ida);
+            const idaValida   = !isNaN(ida.getTime());
+            const voltaValida = !isNaN(volta.getTime());
             let statusTxt, statusCls;
-            if (volta < hoje)         { statusTxt = 'Concluída';     statusCls = 'concluida'; }
-            else if (ida <= hoje)     { statusTxt = 'Em andamento';  statusCls = 'andamento'; }
-            else if (dias <= 30)      { statusTxt = `${dias}d`;      statusCls = 'futura'; }
-            else                      { statusTxt = `${dias} dias`;  statusCls = 'futura'; }
+            if (voltaValida && volta < hoje)      { statusTxt = 'Concluída';     statusCls = 'concluida'; }
+            else if (idaValida && ida <= hoje)    { statusTxt = 'Em andamento';  statusCls = 'andamento'; }
+            else if (dias === null)               { statusTxt = '—';            statusCls = 'futura'; }
+            else if (dias <= 30)                  { statusTxt = `${dias}d`;      statusCls = 'futura'; }
+            else                                  { statusTxt = `${dias} dias`;  statusCls = 'futura'; }
 
             const grad  = gradMap[v.tipo] || gradMap.outros;
             const gastoReal = Utils.gastosDaViagem(v.id);
@@ -1968,6 +2021,7 @@ const Render = {
             if (m.prazo) {
                 if (concluida)       prazoHtml = `<div class="goal-deadline"><i class="fa-solid fa-check-circle"></i> Meta concluída! 🎉</div>`;
                 else if (atrasado)   prazoHtml = `<div class="goal-deadline goal-atrasado"><i class="fa-solid fa-circle-exclamation"></i> Atrasado — ${Utils.data(m.prazo)}</div>`;
+                else if (diasPrazo === null) prazoHtml = `<div class="goal-deadline"><i class="fa-regular fa-calendar"></i> —</div>`;
                 else if (diasPrazo === 0) prazoHtml = `<div class="goal-deadline"><i class="fa-regular fa-clock"></i> Vence hoje!</div>`;
                 else                 prazoHtml = `<div class="goal-deadline"><i class="fa-regular fa-calendar"></i> ${Utils.data(m.prazo)} — faltam ${diasPrazo}d</div>`;
             }
@@ -1995,15 +2049,6 @@ const Render = {
                 ${!concluida ? `<div class="savings-row"><input type="number" placeholder="Guardar R$..." min="0.01" step="0.01" id="dep-inline-${m.id}"><button class="btn btn-success btn-sm" onclick="Controladores._depositoInline('${m.id}')"><i class="fa-solid fa-piggy-bank"></i></button></div>` : `<div style="margin-top:10px"><span class="badge badge-success"><i class="fa-solid fa-check"></i> Concluída!</span></div>`}
             </div>`;
         }).join('');
-
-        // Deposito inline rápido
-        Controladores._depositoInline = (id) => {
-            const val = parseFloat(document.getElementById(`dep-inline-${id}`)?.value);
-            if (!val || val <= 0) return UI.toast('Informe um valor', '', 'aviso');
-            document.getElementById('deposito-meta-id').value = id;
-            document.getElementById('deposito-valor').value   = val;
-            Controladores.depositarMeta();
-        };
     },
 
     checklist: () => {
