@@ -1642,6 +1642,8 @@ tbody td {
   color: white;
 }
 .landing-nav-logo span { color: var(--brand-orange); }
+.landing-nav-logo-text { display: flex; align-items: baseline; }
+.landing-nav-logo-text span { color: var(--brand-orange); }
 .landing-nav-logo-icon {
   width: 36px; height: 36px;
   background: var(--grad-warm);

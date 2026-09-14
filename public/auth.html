@@ -226,16 +226,17 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
-// Se já logado, vai direto pro app — mas mostra aviso visual brevemente
-let _redirecionando = false;
+// SEGURANÇA: a sessão dura apenas enquanto a aba estiver aberta (SESSION),
+// e NUNCA entramos automaticamente — o usuário sempre digita e-mail e senha.
+auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(() => {});
+
+// Ao chegar na tela de login vindo da landing ou de outra aba, garantimos que
+// não há sessão residual: encerramos qualquer sessão antes de mostrar o formulário.
+// (Após um login bem-sucedido, o próprio handler de submit redireciona para app.html.)
+let _loginEmAndamento = false;
 auth.onAuthStateChanged((user) => {
-  if (user && !_redirecionando) {
-    _redirecionando = true;
-    // Mostra aviso em vez de redirecionar silenciosamente
-    const sub = document.getElementById('login-sub');
-    if (sub) sub.innerHTML = `<span style="color:var(--brand-blue);font-weight:600"><i class="fa-solid fa-spinner fa-spin"></i> Sessão ativa, entrando...</span>`;
-    setTimeout(() => { window.location.href = 'app.html'; }, 800);
-  }
+  // Não faz nada automático: a navegação para app.html só ocorre após
+  // o usuário submeter o formulário de login/cadastro com sucesso.
 });
 
 // ── Helpers UI ────────────────────────────────
@@ -334,7 +335,10 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
   setBtnLoading(btn, true);
   try {
     await auth.signInWithEmailAndPassword(email, senha);
-    // Sucesso: onAuthStateChanged redireciona para app.html automaticamente
+    // Sucesso: redireciona explicitamente para o app (não dependemos mais
+    // do onAuthStateChanged, que agora não navega automaticamente).
+    _loginEmAndamento = true;
+    window.location.href = 'app.html';
   } catch (err) {
     toast(erroFirebase(err.code), 'erro');
     setBtnLoading(btn, false);
@@ -385,7 +389,9 @@ document.getElementById('form-cadastro').addEventListener('submit', async (e) =>
     }
 
     toast(`Bem-vindo(a), ${meuNome}! Entrando...`, 'sucesso');
-    // onAuthStateChanged vai redirecionar automaticamente
+    // Redireciona explicitamente para o app após o cadastro bem-sucedido.
+    _loginEmAndamento = true;
+    setTimeout(() => { window.location.href = 'app.html'; }, 600);
 
   } catch (err) {
     toast(erroFirebase(err.code), 'erro');
@@ -423,7 +429,9 @@ async function loginGoogle() {
 // Processa o resultado do redirect do Google ao voltar para a página
 auth.getRedirectResult().then((result) => {
   if (result && result.user) {
-    // Login Google bem-sucedido — onAuthStateChanged vai redirecionar
+    // Login Google bem-sucedido — redireciona explicitamente para o app.
+    _loginEmAndamento = true;
+    window.location.href = 'app.html';
   }
 }).catch((err) => {
   if (err.code && err.code !== 'auth/popup-closed-by-user') {

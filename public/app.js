@@ -18,6 +18,10 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
+// SEGURANÇA: sessão válida apenas enquanto a aba estiver aberta. Ao fechar o
+// navegador ou abrir de novo pela landing, é necessário logar outra vez.
+auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(() => {});
+
 // ── Estado Global ─────────────────────────────────────────────
 // O identificador do Espaço_Casal (casalId) é resolvido dinamicamente
 // a partir da identidade do Usuário logado (ver Auth.resolverCasalId).
@@ -392,6 +396,17 @@ const Auth = {
         try { localStorage.removeItem(DB.chaveCache()); } catch {}
         localStorage.removeItem('pd-casalId');
         auth.signOut().then(() => window.location.href = 'auth.html');
+    },
+
+    // Sai do sistema pela logo e retorna à landing page pública (index.html)
+    sairParaLanding: () => {
+        if (!confirm('Deseja mesmo sair do PlannerDuo?')) return;
+        if (Estado.unsubscribe) Estado.unsubscribe();
+        try { localStorage.removeItem(DB.chaveCache()); } catch {}
+        localStorage.removeItem('pd-casalId');
+        auth.signOut()
+            .then(() => { window.location.href = 'index.html'; })
+            .catch(() => { window.location.href = 'index.html'; });
     }
 };
 
